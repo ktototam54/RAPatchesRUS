@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      7.7
+// @version      7.8
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -9,12 +9,12 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @grant        GM_info
 // @connect      cloud-api.yandex.net
 // @connect      disk.yandex.ru
 // @connect      yandex.net
 // @connect      downloader.disk.yandex.ru
-// @connect      raw.githubusercontent.com
+// @updateURL    https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
+// @downloadURL  https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -22,7 +22,6 @@
     'use strict';
 
     const REMOTE_PUBLIC_URL = 'https://disk.yandex.ru/d/Ggt6hPg-FCsu_w';
-    const REMOTE_SCRIPT_URL = 'https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js';
     const STORAGE_KEY = 'ra_hashes_replacer_data';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
@@ -109,62 +108,6 @@
                 dataLoaded = true;
                 GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
                 refreshAll();
-            });
-    }
-
-    function getLocalVersion() {
-        try {
-            if (typeof GM_info !== 'undefined' && GM_info && GM_info.script && GM_info.script.version) {
-                return GM_info.script.version;
-            }
-        } catch (e) {}
-        return '?';
-    }
-
-    function updateScriptFromDisk() {
-        // Сначала пробуем GitHub, потом Яндекс.Диск (на случай недоступности)
-        return gmFetch(REMOTE_SCRIPT_URL)
-            .then(function (text) {
-                if (!text || text.indexOf('==UserScript==') === -1) {
-                    throw new Error('Файл не похож на userscript');
-                }
-
-                const remoteMatch = text.match(/@version\s+([^\s]+)/);
-                const remoteVer = remoteMatch ? remoteMatch[1] : '?';
-                const localVer = getLocalVersion();
-
-                if (remoteVer === localVer) {
-                    return { status: 'actual', version: localVer };
-                }
-
-                return {
-                    status: 'outdated',
-                    local: localVer,
-                    remote: remoteVer,
-                    text: text
-                };
-            })
-            .catch(function (err) {
-                // Fallback на Яндекс.Диск
-                return yandexResolve(REMOTE_SCRIPT_URL)
-                    .then(function (href) { return gmFetch(href); })
-                    .then(function (text) {
-                        if (!text || text.indexOf('==UserScript==') === -1) {
-                            throw new Error('Файл не похож на userscript');
-                        }
-                        const remoteMatch = text.match(/@version\s+([^\s]+)/);
-                        const remoteVer = remoteMatch ? remoteMatch[1] : '?';
-                        const localVer = getLocalVersion();
-                        if (remoteVer === localVer) {
-                            return { status: 'actual', version: localVer };
-                        }
-                        return {
-                            status: 'outdated',
-                            local: localVer,
-                            remote: remoteVer,
-                            text: text
-                        };
-                    });
             });
     }
 
@@ -481,7 +424,6 @@
 
         if (document.querySelector('[data-ra-menu="1"]')) return;
 
-        // ---- «Получить последние данные» ----
         const dataItem = signOut.cloneNode(true);
         dataItem.dataset.raMenu = '1';
         dataItem.dataset.raFetchData = '1';
@@ -513,61 +455,6 @@
                 });
         });
 
-        // ---- «Обновить скрипт» ----
-        const scriptItem = signOut.cloneNode(true);
-        scriptItem.dataset.raMenu = '1';
-        scriptItem.dataset.raUpdateScript = '1';
-        scriptItem.removeAttribute('href');
-        scriptItem.style.cursor = 'pointer';
-        setTextContent(scriptItem, 'Обновить скрипт');
-
-        scriptItem.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (scriptItem.dataset.busy === '1') return;
-            scriptItem.dataset.busy = '1';
-
-            const orig = scriptItem.textContent;
-            scriptItem.textContent = 'Проверка...';
-
-            updateScriptFromDisk()
-                .then(function (res) {
-                    scriptItem.textContent = orig;
-                    scriptItem.dataset.busy = '0';
-
-                    if (res.status === 'actual') {
-                        alert('Уже актуально: ' + res.version);
-                        return;
-                    }
-
-                    const ok = confirm(
-                        'Доступна новая версия: ' + res.remote + '\n' +
-                        'У вас установлена: ' + res.local + '\n\n' +
-                        'Скопировать новую версию в буфер обмена?\n\n' +
-                        'Затем:\n' +
-                        '1. Открой Violentmonkey / Tampermonkey → свой скрипт → Редактировать\n' +
-                        '2. Ctrl+A → Ctrl+V → Ctrl+S'
-                    );
-                    if (!ok) return;
-
-                    navigator.clipboard.writeText(res.text).then(
-                        function () {
-                            alert('Скопировано. Вставь в редактор (Ctrl+V) и сохрани (Ctrl+S).');
-                        },
-                        function () {
-                            alert('Не удалось записать в буфер обмена.');
-                        }
-                    );
-                })
-                .catch(function (err) {
-                    console.error('[RA Replacer] update error:', err);
-                    scriptItem.textContent = orig;
-                    scriptItem.dataset.busy = '0';
-                    alert('Не удалось проверить обновление: ' + err.message);
-                });
-        });
-
-        signOut.insertAdjacentElement('beforebegin', scriptItem);
         signOut.insertAdjacentElement('beforebegin', dataItem);
     }
 
