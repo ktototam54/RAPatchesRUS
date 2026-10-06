@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      8.4
+// @version      8.3
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска. UI по Ctrl+Shift+E.
 // @author       You
 // @match        https://retroachievements.org/*
