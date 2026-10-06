@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      6.5
-// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска. UI по Ctrl+Shift+E.
+// @version      6.6
+// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска вручную.
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -690,7 +690,6 @@
         row.dataset.mode = 'edit';
         row.innerHTML = '';
 
-        // В режиме редактирования 6 колонок: ID | Название | Drive | Русская | Статус | действия
         row.style.gridTemplateColumns = '60px 1fr 1fr 1fr 90px 64px';
         row.style.gridTemplateRows = 'auto auto';
 
@@ -943,6 +942,8 @@
         return null;
     }
 
+    // Загружаем локально сохранённые данные, если есть.
+    // С Яндекс.Диска НИЧЕГО не тянем автоматически.
     try {
         const cached = GM_getValue(STORAGE_KEY, null);
         if (cached) {
@@ -950,21 +951,6 @@
             catch (e) {}
         }
     } catch (e) {}
-
-    yandexResolve(REMOTE_PUBLIC_URL)
-        .then(function (href) { return gmFetch(href); })
-        .then(function (text) {
-            const parsed = JSON.parse(text);
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                GAME_ID_TO_URL = parsed;
-                dataLoaded = true;
-                lastFetchTime = Date.now();
-                GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
-                refreshAll();
-                updateSaveState();
-            }
-        })
-        .catch(function () {});
 
     function tick() {
         if (dataLoaded) {
