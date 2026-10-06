@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      8.3
+// @version      6.5
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска. UI по Ctrl+Shift+E.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -13,7 +13,6 @@
 // @connect      disk.yandex.ru
 // @connect      yandex.net
 // @connect      downloader.disk.yandex.ru
-// @connect      retroachievements.org
 // @updateURL    https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @downloadURL  https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @run-at       document-idle
@@ -24,7 +23,6 @@
 
     const REMOTE_PUBLIC_URL = 'https://disk.yandex.ru/d/Ggt6hPg-FCsu_w';
     const STORAGE_KEY = 'ra_hashes_replacer_data';
-    const META_KEY = 'ra_hashes_replacer_meta';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
     const DATA_FRESH_MS = 60 * 60 * 1000;
@@ -45,103 +43,6 @@
     let dataLoaded = false;
     let dataLoading = false;
     let lastFetchTime = 0;
-
-    // ---- Кэш метаданных игр (title + platform) ----
-    let gameMeta = {};
-    try {
-        const raw = GM_getValue(META_KEY, null);
-        if (raw) gameMeta = JSON.parse(raw);
-    } catch (e) {}
-    let metaFetchQueue = [];
-    let metaFetchRunning = false;
-
-    function saveGameMeta() {
-        try { GM_setValue(META_KEY, JSON.stringify(gameMeta)); } catch (e) {}
-    }
-
-    function getGameMeta(id) {
-        return gameMeta[id] || null;
-    }
-
-    // Парсит title вида "Resident Evil 4 (PlayStation 2)"
-    function parseTitlePlatform(rawTitle) {
-        if (!rawTitle) return { title: '', platform: '' };
-        let t = rawTitle.replace(/\s*[-—|]\s*RetroAchievements.*$/i, '').trim();
-        // Извлекаем последние скобки
-        const m = t.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
-        if (m) {
-            return { title: m[1].trim(), platform: m[2].trim() };
-        }
-        return { title: t, platform: '' };
-    }
-
-    function fetchGameMeta(id) {
-        return new Promise(function (resolve) {
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: 'https://retroachievements.org/game/' + encodeURIComponent(id),
-                onload: function (res) {
-                    if (res.status < 200 || res.status >= 300) {
-                        resolve({ title: '', platform: '' });
-                        return;
-                    }
-                    const html = res.responseText;
-                    // og:title обычно содержит "Название (Платформа)"
-                    let ogTitle = '';
-                    let mOg = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
-                    if (mOg) ogTitle = mOg[1];
-                    if (!ogTitle) {
-                        const mt = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-                        if (mt) ogTitle = mt[1];
-                    }
-                    const parsed = parseTitlePlatform(ogTitle);
-                    resolve(parsed);
-                },
-                onerror: function () { resolve({ title: '', platform: '' }); },
-                ontimeout: function () { resolve({ title: '', platform: '' }); },
-                timeout: 20000
-            });
-        });
-    }
-
-    function enqueueMetaFetch(ids) {
-        // Добавляем в очередь те ID, которых нет в кэше и которые ещё не в очереди
-        ids.forEach(function (id) {
-            if (gameMeta[id]) return;
-            if (metaFetchQueue.indexOf(id) !== -1) return;
-            metaFetchQueue.push(id);
-        });
-        if (!metaFetchRunning) runMetaFetchQueue();
-    }
-
-    function runMetaFetchQueue() {
-        if (metaFetchQueue.length === 0) {
-            metaFetchRunning = false;
-            saveGameMeta();
-            if (!panel.classList.contains('hidden')) renderRows();
-            return;
-        }
-        metaFetchRunning = true;
-        const id = metaFetchQueue.shift();
-        fetchGameMeta(id).then(function (info) {
-            gameMeta[id] = info;
-            saveGameMeta();
-            if (!panel.classList.contains('hidden')) renderRows();
-            setTimeout(runMetaFetchQueue, 250); // пауза между запросами
-        });
-    }
-
-    function displayGameName(id, entry) {
-        // Возвращает строку: "Название (Платформа)" или "ID: xxx" или загрузку
-        const meta = getGameMeta(id);
-        if (meta && meta.title) {
-            return meta.title + (meta.platform ? ' (' + meta.platform + ')' : '');
-        }
-        if (meta) {
-            return 'Игра #' + id;
-        }
-        return 'Загрузка...';
-    }
 
     function getCurrentGameId() {
         const m = window.location.pathname.match(/^\/game\/(\d+)/);
@@ -209,7 +110,7 @@
                 try { parsed = JSON.parse(text); }
                 catch (e) { throw new Error('Файл не является JSON'); }
                 if (typeof parsed !== 'object' || Array.isArray(parsed)) {
-                    throw new Error('Ожидается объект { "id": { drive, ru, status, comment } }');
+                    throw new Error('Ожидается объект { "id": { drive, ru, status, comment, name } }');
                 }
                 GAME_ID_TO_URL = parsed;
                 dataLoaded = true;
@@ -520,7 +421,6 @@
         applyComment();
     }
 
-    // ---------- CSS ----------
     const CSS = [
         '.ra-game-comment { margin: 12px 0; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-left: 3px solid #4a90d9; border-radius: 6px; color: #d0d0d0; font-size: 14px; line-height: 1.6; word-break: break-word; }',
         '.ra-game-comment .ra-game-comment-label { display: block; font-size: 11px; color: #4a90d9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }',
@@ -537,7 +437,7 @@
         '#ra-replacer-panel .header .close { background: transparent; border: none; color: #999; font-size: 18px; cursor: pointer; }',
         '#ra-replacer-panel .header .close:hover { color: #fff; }',
         '#ra-replacer-panel .body { padding: 12px 14px; overflow-y: auto; }',
-        '#ra-replacer-panel .row { display: grid; grid-template-columns: 60px 1fr 90px 28px 64px; gap: 6px; margin-bottom: 6px; align-items: center; padding: 4px 6px; border-radius: 5px; }',
+        '#ra-replacer-panel .row { display: grid; grid-template-columns: 60px 1fr 100px 28px 64px; gap: 6px; margin-bottom: 6px; align-items: center; padding: 4px 6px; border-radius: 5px; }',
         '#ra-replacer-panel .row.has-comment { border-left: 3px solid #4a90d9; margin-left: -6px; padding-left: 8px; }',
         '#ra-replacer-panel .row.current { background: rgba(244,169,0,0.10); border-left: 3px solid #f4a900; margin-left: -6px; padding-left: 8px; }',
         '#ra-replacer-panel .row.current.has-comment { border-left-color: #f4a900; }',
@@ -545,7 +445,6 @@
         '#ra-replacer-panel .row .name-cell { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e6e6e6; }',
         '#ra-replacer-panel .row .name-cell a { color: #f4a900; text-decoration: none; }',
         '#ra-replacer-panel .row .name-cell a:hover { text-decoration: underline; }',
-        '#ra-replacer-panel .row .name-cell.loading { color: #888; font-style: italic; }',
         '#ra-replacer-panel .row .status-cell { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
         '#ra-replacer-panel input, #ra-replacer-panel select, #ra-replacer-panel textarea { background: #2a2a2a; border: 1px solid #444; color: #e6e6e6; padding: 4px 7px; border-radius: 5px; font-size: 12px; width: 100%; box-sizing: border-box; font-family: inherit; }',
         '#ra-replacer-panel textarea { resize: vertical; min-height: 32px; }',
@@ -577,7 +476,6 @@
     styleEl.textContent = CSS;
     (document.head || document.documentElement).appendChild(styleEl);
 
-    // ---------- UI ----------
     const panel = document.createElement('div');
     panel.id = 'ra-replacer-panel';
     panel.className = 'hidden';
@@ -596,7 +494,7 @@
                 '<div>ID</div><div>Название</div><div>Статус</div><div></div><div></div>' +
             '</div>' +
             '<div class="rows"></div>' +
-            '<p class="hint">В комментарии: [ach=ID], [achievement=ID], [game=ID], [user=ИМЯ].</p>' +
+            '<p class="hint">В комментарии: [ach=ID], [achievement=ID], [game=ID], [user=ИМЯ]. Название игры задаётся вручную в режиме редактирования (✎).</p>' +
         '</div>' +
         '<div class="footer">' +
             '<button class="act primary" data-act="fetch-remote">Получить последние данные</button>' +
@@ -662,7 +560,6 @@
         return true;
     }
 
-    // Строка списка — рендерим название + статус
     function renderRows() {
         rowsContainer.innerHTML = '';
         const currentId = getCurrentGameId();
@@ -675,21 +572,13 @@
             return a.localeCompare(b);
         });
 
-        // Собираем ID для парсинга
-        const needMeta = [];
-        ids.forEach(function (id) {
-            if (!gameMeta[id]) needMeta.push(id);
-        });
-        if (needMeta.length) enqueueMetaFetch(needMeta);
-
         ids.forEach(function (id) {
             const entry = GAME_ID_TO_URL[id] || {};
-            const meta = getGameMeta(id);
+            const displayName = entry.name ? entry.name : ('Игра #' + id);
 
             if (filterText) {
                 const f = filterText.toLowerCase();
-                const name = meta ? (meta.title + ' ' + meta.platform) : '';
-                const haystack = (id + ' ' + name + ' ' + (entry.drive || '') + ' ' + (entry.ru || '') + ' ' + (entry.status || '') + ' ' + (entry.comment || '')).toLowerCase();
+                const haystack = (id + ' ' + displayName + ' ' + (entry.drive || '') + ' ' + (entry.ru || '') + ' ' + (entry.status || '') + ' ' + (entry.comment || '')).toLowerCase();
                 if (haystack.indexOf(f) === -1) return;
             }
 
@@ -704,39 +593,31 @@
             idCell.className = 'id-cell';
             idCell.textContent = id;
 
-            // Название + платформа, кликабельно: если есть drive — ведём на drive,
-            // иначе — на ru, иначе — на страницу игры
             const nameCell = document.createElement('div');
             nameCell.className = 'name-cell';
-            if (!meta) {
-                nameCell.classList.add('loading');
-                nameCell.textContent = 'Загрузка...';
-            } else {
-                const text = displayGameName(id, entry);
-                let href = null;
-                if (entry.drive) href = entry.drive;
-                else if (entry.ru) href = entry.ru;
-                else href = 'https://retroachievements.org/game/' + id;
 
-                const a = document.createElement('a');
-                a.href = href;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                a.textContent = text;
-                a.title = href;
-                nameCell.appendChild(a);
-            }
+            let href = null;
+            if (entry.drive) href = entry.drive;
+            else if (entry.ru) href = entry.ru;
+            else href = 'https://retroachievements.org/game/' + id;
 
-            // Статус
+            const a = document.createElement('a');
+            a.href = href;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = displayName;
+            a.title = displayName;
+            nameCell.appendChild(a);
+
             const statusCell = document.createElement('div');
             statusCell.className = 'status-cell';
             if (entry.status && STATUS_META[entry.status]) {
-                const meta2 = STATUS_META[entry.status];
+                const m = STATUS_META[entry.status];
                 const chip = document.createElement('span');
-                chip.textContent = meta2.text;
-                chip.style.color = meta2.color;
-                chip.style.border = '1px solid ' + meta2.border;
-                chip.style.background = meta2.bg;
+                chip.textContent = m.text;
+                chip.style.color = m.color;
+                chip.style.border = '1px solid ' + m.border;
+                chip.style.background = m.bg;
                 chip.style.padding = '1px 6px';
                 chip.style.borderRadius = '4px';
                 chip.style.fontWeight = '600';
@@ -750,7 +631,9 @@
             goBtn.className = 'row-btn go';
             goBtn.textContent = '🔗';
             goBtn.title = 'Перейти на страницу игры';
-            goBtn.addEventListener('click', function () {
+            goBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 navigateToGame(id);
             });
 
@@ -762,7 +645,9 @@
             editBtn.className = 'row-btn edit';
             editBtn.textContent = '✎';
             editBtn.title = 'Редактировать';
-            editBtn.addEventListener('click', function () {
+            editBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 if (!isDataFresh()) {
                     toast('Сначала получите последние данные', true);
                     return;
@@ -774,7 +659,9 @@
             delBtn.className = 'row-btn del';
             delBtn.textContent = '🗑';
             delBtn.title = 'Удалить';
-            delBtn.addEventListener('click', function () {
+            delBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 if (!isDataFresh()) {
                     toast('Сначала получите последние данные', true);
                     return;
@@ -798,18 +685,23 @@
         });
     }
 
-    // Режим редактирования — показываем поля
     function enterEditMode(row, id) {
         const entry = GAME_ID_TO_URL[id] || {};
         row.dataset.mode = 'edit';
         row.innerHTML = '';
 
-        row.style.gridTemplateColumns = '60px 1fr 1fr 1fr 28px 64px';
+        // В режиме редактирования 6 колонок: ID | Название | Drive | Русская | Статус | действия
+        row.style.gridTemplateColumns = '60px 1fr 1fr 1fr 90px 64px';
         row.style.gridTemplateRows = 'auto auto';
 
         const idCell = document.createElement('div');
         idCell.className = 'id-cell';
         idCell.textContent = id;
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = entry.name || '';
+        nameInput.placeholder = 'Название игры (например: Resident Evil 4 (PS2))';
 
         const driveInput = document.createElement('input');
         driveInput.type = 'text';
@@ -830,14 +722,6 @@
         });
         statusSelect.value = entry.status || '';
 
-        const goBtn = document.createElement('button');
-        goBtn.className = 'row-btn go';
-        goBtn.textContent = '🔗';
-        goBtn.title = 'Перейти на страницу игры';
-        goBtn.addEventListener('click', function () {
-            navigateToGame(id);
-        });
-
         const actionsCell = document.createElement('div');
         actionsCell.style.display = 'flex';
         actionsCell.style.gap = '2px';
@@ -847,15 +731,17 @@
         okBtn.textContent = '✓';
         okBtn.title = 'Сохранить';
         okBtn.addEventListener('click', function () {
+            const nameVal = nameInput.value.trim();
             const driveVal = driveInput.value.trim();
             const ruVal = ruInput.value.trim();
             const statusVal = statusSelect.value;
             const commentVal = commentInput.value.trim();
 
-            if (!driveVal && !ruVal && !statusVal && !commentVal) {
+            if (!nameVal && !driveVal && !ruVal && !statusVal && !commentVal) {
                 delete GAME_ID_TO_URL[id];
             } else {
                 const obj = {};
+                if (nameVal) obj.name = nameVal;
                 if (driveVal) obj.drive = driveVal;
                 if (ruVal) obj.ru = ruVal;
                 if (statusVal) obj.status = statusVal;
@@ -882,14 +768,14 @@
         commentInput.value = entry.comment || '';
         commentInput.placeholder = 'Комментарий. Ссылки: [ach=ID], [game=ID], [user=ИМЯ]';
         commentInput.rows = 2;
-        commentInput.style.gridColumn = '2 / span 4';
+        commentInput.style.gridColumn = '2 / span 5';
         commentInput.style.gridRow = '2';
 
         row.appendChild(idCell);
+        row.appendChild(nameInput);
         row.appendChild(driveInput);
         row.appendChild(ruInput);
         row.appendChild(statusSelect);
-        row.appendChild(goBtn);
         row.appendChild(actionsCell);
         row.appendChild(commentInput);
     }
@@ -954,8 +840,8 @@
             const row = rowsContainer.querySelector('.row[data-id="' + currentId + '"]');
             if (row) {
                 enterEditMode(row, currentId);
-                const driveInput = row.querySelector('input');
-                if (driveInput) driveInput.focus();
+                const nameInput = row.querySelector('input');
+                if (nameInput) nameInput.focus();
             }
         } else if (act === 'export') {
             exportToFile();
