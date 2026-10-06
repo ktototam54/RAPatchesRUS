@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      8.1
+// @version      8.2
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска. UI по Ctrl+Shift+E.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -25,6 +25,7 @@
     const STORAGE_KEY = 'ra_hashes_replacer_data';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
+    const DATA_FRESH_MS = 60 * 60 * 1000;
 
     const STATUS_OPTIONS = [
         { value: '',              label: '—' },
@@ -41,6 +42,7 @@
     let GAME_ID_TO_URL = {};
     let dataLoaded = false;
     let dataLoading = false;
+    let lastFetchTime = 0;
 
     function getCurrentGameId() {
         const m = window.location.pathname.match(/^\/game\/(\d+)/);
@@ -112,9 +114,19 @@
                 }
                 GAME_ID_TO_URL = parsed;
                 dataLoaded = true;
+                lastFetchTime = Date.now();
                 GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
                 refreshAll();
             });
+    }
+
+    function isDataFresh() {
+        return lastFetchTime > 0 && (Date.now() - lastFetchTime) < DATA_FRESH_MS;
+    }
+
+    function minutesSinceFetch() {
+        if (!lastFetchTime) return null;
+        return Math.floor((Date.now() - lastFetchTime) / 60000);
     }
 
     function applyReplacements() {
@@ -420,7 +432,6 @@
         '.ra-game-comment .ra-ach-card:hover { background: rgba(74,144,217,0.2); text-decoration: none; }',
         '.ra-game-comment .ra-ach-card::before { content: "🏆"; font-size: 13px; }',
 
-        // ---- UI-панель ----
         '#ra-replacer-panel { position: fixed; right: 20px; bottom: 20px; width: 660px; max-height: 80vh; background: #1e1e1e; color: #e6e6e6; border: 1px solid #444; border-radius: 10px; z-index: 999999; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }',
         '#ra-replacer-panel.hidden { display: none; }',
         '#ra-replacer-panel .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid #333; font-weight: 600; color: #f4a900; }',
@@ -442,7 +453,7 @@
         '#ra-replacer-panel .row.header-row { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }',
         '#ra-replacer-panel button.act { background: #333; color: #e6e6e6; border: 1px solid #444; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; }',
         '#ra-replacer-panel button.act:hover { background: #3d3d3d; }',
-        '#ra-replacer-panel button.act:disabled { opacity: 0.6; cursor: wait; }',
+        '#ra-replacer-panel button.act:disabled { opacity: 0.6; cursor: not-allowed; }',
         '#ra-replacer-panel button.primary { background: #f4a900; color: #1a1a1a; border: none; font-weight: 600; }',
         '#ra-replacer-panel button.primary:hover { background: #ffbe2e; }',
         '#ra-replacer-panel .footer { padding: 12px 14px; border-top: 1px solid #333; display: flex; flex-wrap: wrap; gap: 6px; }',
@@ -489,9 +500,10 @@
         '</div>' +
         '<div class="footer">' +
             '<button class="act primary" data-act="fetch-remote">Получить последние данные</button>' +
-            '<button class="act" data-act="save">Сохранить</button>' +
+            '<button class="act" data-act="save" id="ra-save-btn">Сохранить</button>' +
             '<button class="act" data-act="export">Экспорт в файл</button>' +
-        '</div>';
+        '</div>' +
+        '<p class="hint" id="ra-save-hint" style="padding: 0 14px 12px; margin: 0;">Перед внесением данных убедитесь, что у вас последние данные — нажмите «Получить последние данные».</p>';
 
     const toastEl = document.createElement('div');
     toastEl.id = 'ra-replacer-toast';
@@ -501,6 +513,7 @@
         document.body.appendChild(panel);
         document.body.appendChild(toastEl);
         renderRows();
+        updateSaveState();
     }
 
     const rowsContainer = panel.querySelector('.rows');
@@ -516,6 +529,28 @@
         toastTimer = setTimeout(function () {
             toastEl.className = isErr ? 'err' : '';
         }, 2600);
+    }
+
+    function updateSaveState() {
+        const saveBtn = panel.querySelector('#ra-save-btn');
+        const hint = panel.querySelector('#ra-save-hint');
+        if (!saveBtn || !hint) return;
+
+        if (!isDataFresh()) {
+            saveBtn.disabled = true;
+            saveBtn.title = 'Сначала получите последние данные';
+            if (lastFetchTime === 0) {
+                hint.textContent = 'Перед внесением данных убедитесь, что у вас последние данные — нажмите «Получить последние данные».';
+            } else {
+                hint.textContent = 'Данные устарели (получены ' + minutesSinceFetch() + ' мин. назад). Нажмите «Получить последние данные» ещё раз.';
+            }
+            hint.style.color = '#d97a7a';
+        } else {
+            saveBtn.disabled = false;
+            saveBtn.title = 'Сохранить изменения';
+            hint.textContent = 'Данные свежие (получены ' + minutesSinceFetch() + ' мин. назад). Можно сохранять.';
+            hint.style.color = '#6ac46a';
+        }
     }
 
     function navigateToGame(id) {
@@ -600,6 +635,10 @@
             editBtn.textContent = '✎';
             editBtn.title = 'Редактировать';
             editBtn.addEventListener('click', function () {
+                if (!isDataFresh()) {
+                    toast('Сначала получите последние данные', true);
+                    return;
+                }
                 enterEditMode(row, id);
             });
 
@@ -608,6 +647,10 @@
             delBtn.textContent = '🗑';
             delBtn.title = 'Удалить';
             delBtn.addEventListener('click', function () {
+                if (!isDataFresh()) {
+                    toast('Сначала получите последние данные', true);
+                    return;
+                }
                 delete GAME_ID_TO_URL[id];
                 saveData(GAME_ID_TO_URL);
                 renderRows();
@@ -757,10 +800,18 @@
         const act = btn.dataset.act;
 
         if (act === 'save') {
+            if (!isDataFresh()) {
+                toast('Сначала получите последние данные — нажмите «Получить последние данные»', true);
+                return;
+            }
             saveData(GAME_ID_TO_URL);
             toast('Сохранено локально');
             refreshAll();
         } else if (act === 'add-current') {
+            if (!isDataFresh()) {
+                toast('Сначала получите последние данные', true);
+                return;
+            }
             const currentId = getCurrentGameId();
             if (!currentId) {
                 toast('Откройте страницу игры, чтобы добавить её', true);
@@ -788,6 +839,7 @@
                     btn.disabled = false;
                     btn.textContent = orig;
                     toast('Данные получены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
+                    updateSaveState();
                 })
                 .catch(function (err) {
                     btn.disabled = false;
@@ -810,17 +862,18 @@
         panel.classList.add('hidden');
     });
 
-    // ---------- Горячие клавиши: Ctrl+Shift+E ----------
     document.addEventListener('keydown', function (e) {
         if (e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e' || e.code === 'KeyE')) {
             e.preventDefault();
             e.stopPropagation();
             panel.classList.toggle('hidden');
-            if (!panel.classList.contains('hidden')) renderRows();
+            if (!panel.classList.contains('hidden')) {
+                renderRows();
+                updateSaveState();
+            }
         }
     }, true);
 
-    // ---------- Пункт меню профиля ----------
     function injectMenuItems() {
         const signOut = findMenuLinkByText('Sign out');
         if (!signOut) return;
@@ -848,6 +901,7 @@
                     dataItem.textContent = orig;
                     dataLoading = false;
                     alert('Данные получены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
+                    updateSaveState();
                 })
                 .catch(function (err) {
                     console.error('[RA Replacer] fetch error:', err);
@@ -874,7 +928,6 @@
         return null;
     }
 
-    // ---------- старт ----------
     try {
         const cached = GM_getValue(STORAGE_KEY, null);
         if (cached) {
@@ -890,8 +943,10 @@
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
                 GAME_ID_TO_URL = parsed;
                 dataLoaded = true;
+                lastFetchTime = Date.now();
                 GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
                 refreshAll();
+                updateSaveState();
             }
         })
         .catch(function () {});
@@ -903,6 +958,7 @@
             applyComment();
         }
         injectMenuItems();
+        if (!panel.classList.contains('hidden')) updateSaveState();
     }
 
     const observer = new MutationObserver(function () {
