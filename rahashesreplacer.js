@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      7.6
+// @version      7.7
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -14,6 +14,7 @@
 // @connect      disk.yandex.ru
 // @connect      yandex.net
 // @connect      downloader.disk.yandex.ru
+// @connect      raw.githubusercontent.com
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -21,7 +22,7 @@
     'use strict';
 
     const REMOTE_PUBLIC_URL = 'https://disk.yandex.ru/d/Ggt6hPg-FCsu_w';
-    const REMOTE_SCRIPT_URL = 'https://disk.yandex.ru/d/nqQw4bOmqyjFAA';
+    const REMOTE_SCRIPT_URL = 'https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js';
     const STORAGE_KEY = 'ra_hashes_replacer_data';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
@@ -121,8 +122,8 @@
     }
 
     function updateScriptFromDisk() {
-        return yandexResolve(REMOTE_SCRIPT_URL)
-            .then(function (href) { return gmFetch(href); })
+        // Сначала пробуем GitHub, потом Яндекс.Диск (на случай недоступности)
+        return gmFetch(REMOTE_SCRIPT_URL)
             .then(function (text) {
                 if (!text || text.indexOf('==UserScript==') === -1) {
                     throw new Error('Файл не похож на userscript');
@@ -142,6 +143,28 @@
                     remote: remoteVer,
                     text: text
                 };
+            })
+            .catch(function (err) {
+                // Fallback на Яндекс.Диск
+                return yandexResolve(REMOTE_SCRIPT_URL)
+                    .then(function (href) { return gmFetch(href); })
+                    .then(function (text) {
+                        if (!text || text.indexOf('==UserScript==') === -1) {
+                            throw new Error('Файл не похож на userscript');
+                        }
+                        const remoteMatch = text.match(/@version\s+([^\s]+)/);
+                        const remoteVer = remoteMatch ? remoteMatch[1] : '?';
+                        const localVer = getLocalVersion();
+                        if (remoteVer === localVer) {
+                            return { status: 'actual', version: localVer };
+                        }
+                        return {
+                            status: 'outdated',
+                            local: localVer,
+                            remote: remoteVer,
+                            text: text
+                        };
+                    });
             });
     }
 
