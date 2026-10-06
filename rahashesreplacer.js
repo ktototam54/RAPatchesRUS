@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      6.8
+// @version      6.9
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска вручную.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -44,6 +44,8 @@
     let dataLoaded = false;
     let dataLoading = false;
     let lastFetchTime = 0;
+    let hasChanges = false;
+    let wasFresh = false;
 
     function getCurrentGameId() {
         const m = window.location.pathname.match(/^\/game\/(\d+)/);
@@ -116,6 +118,8 @@
                 GAME_ID_TO_URL = parsed;
                 dataLoaded = true;
                 lastFetchTime = Date.now();
+                hasChanges = false;
+                wasFresh = true;
                 GM_setValue(TIME_KEY, lastFetchTime);
                 GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
                 refreshAll();
@@ -679,9 +683,9 @@
                 }
                 delete GAME_ID_TO_URL[id];
                 saveData(GAME_ID_TO_URL);
+                hasChanges = true;
                 renderRows();
                 refreshAll();
-                autoExportAndNotify();
             });
 
             actionsCell.appendChild(editBtn);
@@ -760,9 +764,9 @@
                 GAME_ID_TO_URL[id] = obj;
             }
             saveData(GAME_ID_TO_URL);
+            hasChanges = true;
             renderRows();
             refreshAll();
-            autoExportAndNotify();
         });
 
         const cancelBtn = document.createElement('button');
@@ -807,13 +811,9 @@
         }
     });
 
-    function buildExportBlob() {
-        const json = JSON.stringify(GAME_ID_TO_URL, null, 2);
-        return new Blob([json], { type: 'application/json' });
-    }
-
     function exportToFile() {
-        const blob = buildExportBlob();
+        const json = JSON.stringify(GAME_ID_TO_URL, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -825,16 +825,34 @@
         toast('Файл сохранён: rahashesreplacer.json');
     }
 
-    function autoExportAndNotify() {
-        // Автоматически выгружаем файл
-        exportToFile();
-        // И напоминаем залить его на Яндекс.Диск
-        setTimeout(function () {
-            alert(
-                'Файл rahashesreplacer.json сохранён на компьютер.\n\n' +
-                'Не забудь загрузить его на Яндекс.Диск (по ссылке из настроек), чтобы изменения увидели все.'
-            );
-        }, 400);
+    // Срабатывает один раз при истечении часа
+    function onTimerExpired() {
+        if (hasChanges) {
+            exportToFile();
+            hasChanges = false;
+            setTimeout(function () {
+                const ok = confirm(
+                    'Время истекло, но вы вносили изменения.\n\n' +
+                    'Файл rahashesreplacer.json сохранён на компьютер.\n' +
+                    'Залейте его на Яндекс.Диск, чтобы изменения увидели все.\n\n' +
+                    'Получить последние данные с Яндекс.Диска сейчас?'
+                );
+                if (ok) {
+                    fetchRemoteData()
+                        .then(function () {
+                            toast('Данные обновлены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
+                            updateSaveState();
+                        })
+                        .catch(function (err) {
+                            toast('Не удалось получить данные: ' + err.message, true);
+                        });
+                }
+            }, 400);
+        } else {
+            lastFetchTime = 0;
+            GM_setValue(TIME_KEY, 0);
+            updateSaveState();
+        }
     }
 
     panel.addEventListener('click', function (e) {
@@ -848,9 +866,9 @@
                 return;
             }
             saveData(GAME_ID_TO_URL);
+            hasChanges = true;
             toast('Сохранено локально');
             refreshAll();
-            autoExportAndNotify();
         } else if (act === 'add-current') {
             if (!isDataFresh()) {
                 toast('Сначала получите последние данные', true);
@@ -864,6 +882,7 @@
             if (!GAME_ID_TO_URL[currentId]) {
                 GAME_ID_TO_URL[currentId] = {};
                 saveData(GAME_ID_TO_URL);
+                hasChanges = true;
             }
             renderRows();
             const row = rowsContainer.querySelector('.row[data-id="' + currentId + '"]');
@@ -993,6 +1012,15 @@
         }
         injectMenuItems();
         if (!panel.classList.contains('hidden')) updateSaveState();
+
+        // Ловим момент, когда час истёк
+        const nowFresh = isDataFresh();
+        if (wasFresh && !nowFresh) {
+            wasFresh = false;
+            onTimerExpired();
+        } else if (nowFresh) {
+            wasFresh = true;
+        }
     }
 
     const observer = new MutationObserver(function () {
@@ -1002,7 +1030,6 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
 
     setInterval(tick, 500);
-    // Отдельный интервал для секундного счётчика в подсказке.
     setInterval(function () {
         if (!panel.classList.contains('hidden')) updateSaveState();
     }, 1000);
