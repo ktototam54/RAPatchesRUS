@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      6.7
+// @version      6.8
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска вручную.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -126,9 +126,18 @@
         return lastFetchTime > 0 && (Date.now() - lastFetchTime) < DATA_FRESH_MS;
     }
 
-    function minutesSinceFetch() {
-        if (!lastFetchTime) return null;
-        return Math.floor((Date.now() - lastFetchTime) / 60000);
+    function msLeft() {
+        if (!lastFetchTime) return 0;
+        const left = DATA_FRESH_MS - (Date.now() - lastFetchTime);
+        return left > 0 ? left : 0;
+    }
+
+    function formatLeftTime() {
+        const ms = msLeft();
+        const total = Math.floor(ms / 1000);
+        const mm = Math.floor(total / 60);
+        const ss = total % 60;
+        return String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
     }
 
     function applyReplacements() {
@@ -542,13 +551,13 @@
             if (lastFetchTime === 0) {
                 hint.textContent = 'Перед внесением данных убедитесь, что у вас последние данные — нажмите «Получить последние данные».';
             } else {
-                hint.textContent = 'Данные устарели (получены ' + minutesSinceFetch() + ' мин. назад). Нажмите «Получить последние данные» ещё раз.';
+                hint.textContent = 'Данные устарели. Нажмите «Получить последние данные» ещё раз.';
             }
             hint.style.color = '#d97a7a';
         } else {
             saveBtn.disabled = false;
             saveBtn.title = 'Сохранить изменения';
-            hint.textContent = 'Данные свежие (получены ' + minutesSinceFetch() + ' мин. назад). Можно сохранять.';
+            hint.textContent = 'Данные свежие. Можно сохранять. Осталось: ' + formatLeftTime();
             hint.style.color = '#6ac46a';
         }
     }
@@ -672,6 +681,7 @@
                 saveData(GAME_ID_TO_URL);
                 renderRows();
                 refreshAll();
+                autoExportAndNotify();
             });
 
             actionsCell.appendChild(editBtn);
@@ -752,6 +762,7 @@
             saveData(GAME_ID_TO_URL);
             renderRows();
             refreshAll();
+            autoExportAndNotify();
         });
 
         const cancelBtn = document.createElement('button');
@@ -796,9 +807,13 @@
         }
     });
 
-    function exportToFile() {
+    function buildExportBlob() {
         const json = JSON.stringify(GAME_ID_TO_URL, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
+        return new Blob([json], { type: 'application/json' });
+    }
+
+    function exportToFile() {
+        const blob = buildExportBlob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -808,6 +823,18 @@
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
         toast('Файл сохранён: rahashesreplacer.json');
+    }
+
+    function autoExportAndNotify() {
+        // Автоматически выгружаем файл
+        exportToFile();
+        // И напоминаем залить его на Яндекс.Диск
+        setTimeout(function () {
+            alert(
+                'Файл rahashesreplacer.json сохранён на компьютер.\n\n' +
+                'Не забудь загрузить его на Яндекс.Диск (по ссылке из настроек), чтобы изменения увидели все.'
+            );
+        }, 400);
     }
 
     panel.addEventListener('click', function (e) {
@@ -823,6 +850,7 @@
             saveData(GAME_ID_TO_URL);
             toast('Сохранено локально');
             refreshAll();
+            autoExportAndNotify();
         } else if (act === 'add-current') {
             if (!isDataFresh()) {
                 toast('Сначала получите последние данные', true);
@@ -944,8 +972,7 @@
         return null;
     }
 
-    // Загружаем локально сохранённые данные и время последнего получения.
-    // С Яндекс.Диска автоматически НЕ тянем.
+    // Восстанавливаем данные и время из локального хранилища.
     try {
         const cached = GM_getValue(STORAGE_KEY, null);
         if (cached) {
@@ -975,6 +1002,10 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
 
     setInterval(tick, 500);
+    // Отдельный интервал для секундного счётчика в подсказке.
+    setInterval(function () {
+        if (!panel.classList.contains('hidden')) updateSaveState();
+    }, 1000);
     window.addEventListener('load', tick);
     document.addEventListener('DOMContentLoaded', tick);
     tick();
