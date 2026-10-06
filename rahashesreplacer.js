@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      6.6
+// @version      6.7
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска вручную.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -23,6 +23,7 @@
 
     const REMOTE_PUBLIC_URL = 'https://disk.yandex.ru/d/Ggt6hPg-FCsu_w';
     const STORAGE_KEY = 'ra_hashes_replacer_data';
+    const TIME_KEY = 'ra_hashes_replacer_last_fetch';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
     const DATA_FRESH_MS = 60 * 60 * 1000;
@@ -115,6 +116,7 @@
                 GAME_ID_TO_URL = parsed;
                 dataLoaded = true;
                 lastFetchTime = Date.now();
+                GM_setValue(TIME_KEY, lastFetchTime);
                 GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
                 refreshAll();
             });
@@ -942,13 +944,17 @@
         return null;
     }
 
-    // Загружаем локально сохранённые данные, если есть.
-    // С Яндекс.Диска НИЧЕГО не тянем автоматически.
+    // Загружаем локально сохранённые данные и время последнего получения.
+    // С Яндекс.Диска автоматически НЕ тянем.
     try {
         const cached = GM_getValue(STORAGE_KEY, null);
         if (cached) {
             try { GAME_ID_TO_URL = JSON.parse(cached); dataLoaded = true; }
             catch (e) {}
+        }
+        const savedTime = GM_getValue(TIME_KEY, 0);
+        if (savedTime && typeof savedTime === 'number') {
+            lastFetchTime = savedTime;
         }
     } catch (e) {}
 
