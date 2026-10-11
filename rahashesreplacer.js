@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      8.2
-// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных с фильтром по консоли.
+// @version      8.3
+// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных с редактированием.
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -30,6 +30,13 @@
         beaten:        { text: 'Битен',             color: '#c8c8c8', bg: 'rgba(200,200,200,0.15)', border: '#c8c8c8' },
         ru_impossible: { text: 'Ру ром невозможен', color: '#c084fc', bg: 'rgba(192,132,252,0.15)', border: '#c084fc' }
     };
+
+    const STATUS_OPTIONS = [
+        { value: '',              label: '—' },
+        { value: 'mastering',     label: 'Мастеринг' },
+        { value: 'beaten',        label: 'Битен' },
+        { value: 'ru_impossible', label: 'Ру ром невозможен' }
+    ];
 
     let GAME_ID_TO_URL = {};
     let dataLoaded = false;
@@ -420,6 +427,8 @@
         '#raru-panel .db-toolbar button:hover { background: #4f545c; }',
         '#raru-panel .db-toolbar button.primary { background: #2b6cb0; border-color: #3182ce; color: #fff; font-weight: 600; }',
         '#raru-panel .db-toolbar button.primary:hover { background: #3182ce; }',
+        '#raru-panel .db-toolbar button.success { background: #276749; border-color: #38a169; color: #fff; font-weight: 600; }',
+        '#raru-panel .db-toolbar button.success:hover { background: #38a169; }',
         '#raru-panel .db-toolbar input[type="text"] { background: #2c2f33; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; flex: 1; min-width: 180px; max-width: 320px; }',
         '#raru-panel .db-toolbar input[type="text"]:focus { outline: none; border-color: #f4a900; }',
         '#raru-panel .db-toolbar select { background: #2c2f33; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; max-width: 220px; }',
@@ -463,7 +472,28 @@
         '#raru-panel .db-details .detail-actions button.drive:hover { background: #3182ce; }',
         '#raru-panel .db-details .detail-actions button.ru { background: #276749; border-color: #38a169; color: #fff; }',
         '#raru-panel .db-details .detail-actions button.ru:hover { background: #38a169; }',
-        '#raru-panel .db-details .detail-actions button:disabled { opacity: 0.4; cursor: not-allowed; }'
+        '#raru-panel .db-details .detail-actions button.edit { background: #6b4f1c; border-color: #8a6a2a; color: #fff; }',
+        '#raru-panel .db-details .detail-actions button.edit:hover { background: #8a6a2a; }',
+        '#raru-panel .db-details .detail-actions button:disabled { opacity: 0.4; cursor: not-allowed; }',
+
+        // ---- Модальное окно редактирования ----
+        '#raru-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000000; display: flex; align-items: center; justify-content: center; }',
+        '#raru-modal-overlay.hidden { display: none; }',
+        '#raru-modal { background: #2c2f33; color: #dcddde; border: 1px solid #40444b; border-radius: 8px; width: 640px; max-width: 95vw; max-height: 90vh; overflow-y: auto; padding: 16px 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 12px 48px rgba(0,0,0,0.8); }',
+        '#raru-modal h2 { margin: 0 0 12px; font-size: 16px; color: #f4a900; }',
+        '#raru-modal .field { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }',
+        '#raru-modal .field label { font-size: 12px; color: #b9bbbe; }',
+        '#raru-modal input[type="text"], #raru-modal select, #raru-modal textarea { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 6px 8px; font-size: 13px; font-family: inherit; width: 100%; box-sizing: border-box; }',
+        '#raru-modal textarea { min-height: 70px; resize: vertical; }',
+        '#raru-modal input:focus, #raru-modal select:focus, #raru-modal textarea:focus { outline: none; border-color: #f4a900; }',
+        '#raru-modal input[disabled] { opacity: 0.6; cursor: not-allowed; }',
+        '#raru-modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }',
+        '#raru-modal .actions button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }',
+        '#raru-modal .actions button:hover { background: #4f545c; }',
+        '#raru-modal .actions button.primary { background: #2b6cb0; border-color: #3182ce; color: #fff; }',
+        '#raru-modal .actions button.primary:hover { background: #3182ce; }',
+        '#raru-modal .actions button.danger { background: #6b2a2a; border-color: #8a3a3a; color: #fff; }',
+        '#raru-modal .actions button.danger:hover { background: #8a3a3a; }'
     ].join('\n');
 
     const styleEl = document.createElement('style');
@@ -481,6 +511,8 @@
         '</div>' +
         '<div class="db-toolbar">' +
             '<button class="primary" data-act="fetch-remote">Обновить данные</button>' +
+            '<button class="success" data-act="add-new">+ Новая игра</button>' +
+            '<button class="success" data-act="save-local">Сохранить</button>' +
             '<button data-act="export">Экспорт в файл</button>' +
             '<input type="text" id="raru-search" placeholder="Поиск..." />' +
             '<select id="raru-filter-console"><option value="">Все консоли</option></select>' +
@@ -517,9 +549,39 @@
             '<div class="detail-actions" id="raru-detail-actions"></div>' +
         '</div>';
 
+    // ---------- Модальное окно редактирования ----------
+    const modalOverlay = document.createElement('div');
+    modalOverlay.id = 'raru-modal-overlay';
+    modalOverlay.className = 'hidden';
+    modalOverlay.innerHTML =
+        '<div id="raru-modal">' +
+            '<h2 id="raru-modal-title">Редактирование</h2>' +
+            '<div class="field"><label>Game ID</label><input type="text" id="raru-edit-id" placeholder="например 2606" /></div>' +
+            '<div class="field"><label>Название игры (с консолью в скобках, например: Resident Evil 4 (PlayStation 2))</label><input type="text" id="raru-edit-name" placeholder="Resident Evil 4 (PlayStation 2)" /></div>' +
+            '<div class="field"><label>Drive (Google Drive ссылка)</label><input type="text" id="raru-edit-drive" placeholder="https://drive.google.com/..." /></div>' +
+            '<div class="field"><label>Русская версия (ссылка)</label><input type="text" id="raru-edit-ru" placeholder="https://disk.yandex.ru/..." /></div>' +
+            '<div class="field"><label>Статус</label><select id="raru-edit-status"></select></div>' +
+            '<div class="field"><label>Комментарий</label><textarea id="raru-edit-comment" placeholder="Поддерживаются ссылки: [ach=ID], [game=ID], [user=ИМЯ]"></textarea></div>' +
+            '<div class="actions">' +
+                '<button class="danger" id="raru-edit-delete">Удалить</button>' +
+                '<button id="raru-edit-cancel">Отмена</button>' +
+                '<button class="primary" id="raru-edit-save">Сохранить</button>' +
+            '</div>' +
+        '</div>';
+
+    // Заполняем селект статусов
+    const editStatusSelect = modalOverlay.querySelector('#raru-edit-status');
+    STATUS_OPTIONS.forEach(function (o) {
+        const opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        editStatusSelect.appendChild(opt);
+    });
+
     function mountUI() {
         if (!document.body) return setTimeout(mountUI, 50);
         document.body.appendChild(panel);
+        document.body.appendChild(modalOverlay);
         bindUI();
         rebuildConsoleOptions();
         renderTable();
@@ -538,6 +600,104 @@
     const detailTitle = panel.querySelector('#raru-detail-title');
     const detailComment = panel.querySelector('#raru-detail-comment');
     const detailActions = panel.querySelector('#raru-detail-actions');
+
+    // ---------- Модалка ----------
+    const modalTitle = modalOverlay.querySelector('#raru-modal-title');
+    const editIdInput = modalOverlay.querySelector('#raru-edit-id');
+    const editNameInput = modalOverlay.querySelector('#raru-edit-name');
+    const editDriveInput = modalOverlay.querySelector('#raru-edit-drive');
+    const editRuInput = modalOverlay.querySelector('#raru-edit-ru');
+    const editCommentInput = modalOverlay.querySelector('#raru-edit-comment');
+    const editDeleteBtn = modalOverlay.querySelector('#raru-edit-delete');
+    const editCancelBtn = modalOverlay.querySelector('#raru-edit-cancel');
+    const editSaveBtn = modalOverlay.querySelector('#raru-edit-save');
+
+    let editingIsNew = false;
+
+    function openEditModal(gameId) {
+        editingIsNew = false;
+        const entry = GAME_ID_TO_URL[gameId] || {};
+        modalTitle.textContent = 'Редактирование игры #' + gameId;
+        editIdInput.value = gameId;
+        editIdInput.disabled = true;
+        editNameInput.value = entry.name || '';
+        editDriveInput.value = entry.drive || '';
+        editRuInput.value = entry.ru || '';
+        editStatusSelect.value = entry.status || '';
+        editCommentInput.value = entry.comment || '';
+        editDeleteBtn.style.display = '';
+        modalOverlay.classList.remove('hidden');
+        editNameInput.focus();
+    }
+
+    function openNewModal() {
+        editingIsNew = true;
+        modalTitle.textContent = 'Новая игра';
+        editIdInput.value = '';
+        editIdInput.disabled = false;
+        editNameInput.value = '';
+        editDriveInput.value = '';
+        editRuInput.value = '';
+        editStatusSelect.value = '';
+        editCommentInput.value = '';
+        editDeleteBtn.style.display = 'none';
+        modalOverlay.classList.remove('hidden');
+        editIdInput.focus();
+    }
+
+    function closeModal() {
+        modalOverlay.classList.add('hidden');
+    }
+
+    function saveFromModal() {
+        const id = editIdInput.value.trim();
+        if (!id || !/^\d+$/.test(id)) {
+            alert('Game ID должен быть числом');
+            return;
+        }
+        const obj = {};
+        const nameVal = editNameInput.value.trim();
+        const driveVal = editDriveInput.value.trim();
+        const ruVal = editRuInput.value.trim();
+        const statusVal = editStatusSelect.value;
+        const commentVal = editCommentInput.value.trim();
+
+        if (nameVal) obj.name = nameVal;
+        if (driveVal) obj.drive = driveVal;
+        if (ruVal) obj.ru = ruVal;
+        if (statusVal) obj.status = statusVal;
+        if (commentVal) obj.comment = commentVal;
+
+        GAME_ID_TO_URL[id] = obj;
+        hasChanges = true;
+        saveData(GAME_ID_TO_URL);
+        closeModal();
+        rebuildConsoleOptions();
+        renderTable();
+        renderDetails();
+        refreshAll();
+    }
+
+    function deleteFromModal() {
+        const id = editIdInput.value.trim();
+        if (!id) return;
+        if (!confirm('Удалить игру #' + id + '?')) return;
+        delete GAME_ID_TO_URL[id];
+        hasChanges = true;
+        saveData(GAME_ID_TO_URL);
+        closeModal();
+        rebuildConsoleOptions();
+        renderTable();
+        renderDetails();
+        refreshAll();
+    }
+
+    editSaveBtn.addEventListener('click', saveFromModal);
+    editCancelBtn.addEventListener('click', closeModal);
+    editDeleteBtn.addEventListener('click', deleteFromModal);
+    modalOverlay.addEventListener('click', function (e) {
+        if (e.target === modalOverlay) closeModal();
+    });
 
     function updateStatus(errMsg, isErr) {
         if (errMsg) {
@@ -758,6 +918,10 @@
                 renderDetails();
             });
 
+            tr.addEventListener('dblclick', function () {
+                openEditModal(r.id);
+            });
+
             tbody.appendChild(tr);
         });
     }
@@ -797,6 +961,14 @@
         }
         detailActions.appendChild(btnRu);
 
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'edit';
+        btnEdit.textContent = '✎ Редактировать';
+        btnEdit.addEventListener('click', function () {
+            openEditModal(r.id);
+        });
+        detailActions.appendChild(btnEdit);
+
         const btnRa = document.createElement('button');
         btnRa.textContent = '🔗 Страница на RA';
         btnRa.addEventListener('click', function () {
@@ -819,6 +991,10 @@
         filterRuChk.checked = false;
         filterCommentChk.checked = false;
         renderTable();
+    }
+
+    function saveData(data) {
+        GM_setValue(STORAGE_KEY, JSON.stringify(data));
     }
 
     function bindUI() {
@@ -873,11 +1049,18 @@
             const act = btn.dataset.act;
 
             if (act === 'fetch-remote') {
+                if (!confirm('Загрузить свежие данные с GitHub? Несохранённые правки будут потеряны.')) return;
                 fetchRemoteData()
                     .then(function () { renderTable(); })
                     .catch(function (err) {
                         console.error('[RA Replacer] fetch error:', err);
                     });
+            } else if (act === 'add-new') {
+                openNewModal();
+            } else if (act === 'save-local') {
+                saveData(GAME_ID_TO_URL);
+                hasChanges = true;
+                alert('Сохранено локально. Не забудь нажать «Экспорт в файл» и залить JSON в репозиторий GitHub.');
             } else if (act === 'export') {
                 exportToFile();
             } else if (act === 'clear-filters') {
@@ -910,6 +1093,9 @@
                 renderDetails();
                 updateStatus();
             }
+        }
+        if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+            closeModal();
         }
     }, true);
 
@@ -972,10 +1158,6 @@
         const nowFresh = isDataFresh();
         if (wasFresh && !nowFresh) {
             wasFresh = false;
-            if (hasChanges) {
-                exportToFile();
-                hasChanges = false;
-            }
         } else if (nowFresh) {
             wasFresh = true;
         }
