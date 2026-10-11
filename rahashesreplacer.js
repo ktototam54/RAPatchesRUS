@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      7.0
-// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с GitHub.
+// @version      8.2
+// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных с фильтром по консоли.
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -25,12 +25,6 @@
     const RU_TEXT = 'Русская версия';
     const DATA_FRESH_MS = 60 * 60 * 1000;
 
-    const STATUS_OPTIONS = [
-        { value: '',              label: '—' },
-        { value: 'mastering',     label: 'Мастеринг' },
-        { value: 'beaten',        label: 'Битен' },
-        { value: 'ru_impossible', label: 'Ру ром невозможен' }
-    ];
     const STATUS_META = {
         mastering:     { text: 'Мастеринг',         color: '#f4a900', bg: 'rgba(244,169,0,0.15)',   border: '#f4a900' },
         beaten:        { text: 'Битен',             color: '#c8c8c8', bg: 'rgba(200,200,200,0.15)', border: '#c8c8c8' },
@@ -43,12 +37,81 @@
     let lastFetchTime = 0;
     let hasChanges = false;
     let wasFresh = false;
+    let selectedGameId = null;
+    let sortColumn = 'id';
+    let sortAsc = true;
+
+    // ---- Фильтры ----
+    let filterText = '';
+    let filterConsole = '';
+    let filterStatus = '';
+    let filterDrive = false;
+    let filterRu = false;
+    let filterComment = false;
 
     function getCurrentGameId() {
         const m = window.location.pathname.match(/^\/game\/(\d+)/);
         return m ? m[1] : null;
     }
 
+    function gmFetch(url) {
+        return new Promise(function (resolve, reject) {
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: url,
+                onload: function (res) {
+                    if (res.status >= 200 && res.status < 300) resolve(res.responseText);
+                    else reject(new Error('HTTP ' + res.status));
+                },
+                onerror: function () { reject(new Error('Сетевая ошибка')); },
+                ontimeout: function () { reject(new Error('Таймаут')); },
+                timeout: 20000
+            });
+        });
+    }
+
+    function fetchRemoteData() {
+        dataLoading = true;
+        updateStatus();
+        return gmFetch(REMOTE_PUBLIC_URL)
+            .then(function (text) {
+                let parsed;
+                try { parsed = JSON.parse(text); }
+                catch (e) { throw new Error('Файл не является JSON'); }
+                if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+                    throw new Error('Ожидается объект { "id": { drive, ru, status, comment, name } }');
+                }
+                GAME_ID_TO_URL = parsed;
+                dataLoaded = true;
+                lastFetchTime = Date.now();
+                hasChanges = false;
+                wasFresh = true;
+                GM_setValue(TIME_KEY, lastFetchTime);
+                GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
+                refreshAll();
+                rebuildConsoleOptions();
+                renderTable();
+                updateStatus();
+            })
+            .catch(function (err) {
+                dataLoading = false;
+                updateStatus('Ошибка: ' + err.message, true);
+                throw err;
+            });
+    }
+
+    function isDataFresh() {
+        return lastFetchTime > 0 && (Date.now() - lastFetchTime) < DATA_FRESH_MS;
+    }
+
+    function parseName(fullName) {
+        if (!fullName) return { name: '', console: '' };
+        const m = fullName.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+        if (m) return { name: m[1].trim(), console: m[2].trim() };
+        return { name: fullName, console: '' };
+    }
+
+    // ---------- Вставка блоков в страницу RA ----------
     function findTextNode(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         let node;
@@ -74,60 +137,6 @@
         }, true);
     }
 
-    function gmFetch(url) {
-        return new Promise(function (resolve, reject) {
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: url,
-                onload: function (res) {
-                    if (res.status >= 200 && res.status < 300) resolve(res.responseText);
-                    else reject(new Error('HTTP ' + res.status));
-                },
-                onerror: function () { reject(new Error('Сетевая ошибка')); },
-                ontimeout: function () { reject(new Error('Таймаут')); },
-                timeout: 20000
-            });
-        });
-    }
-
-    function fetchRemoteData() {
-        return gmFetch(REMOTE_PUBLIC_URL)
-            .then(function (text) {
-                let parsed;
-                try { parsed = JSON.parse(text); }
-                catch (e) { throw new Error('Файл не является JSON'); }
-                if (typeof parsed !== 'object' || Array.isArray(parsed)) {
-                    throw new Error('Ожидается объект { "id": { drive, ru, status, comment, name } }');
-                }
-                GAME_ID_TO_URL = parsed;
-                dataLoaded = true;
-                lastFetchTime = Date.now();
-                hasChanges = false;
-                wasFresh = true;
-                GM_setValue(TIME_KEY, lastFetchTime);
-                GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
-                refreshAll();
-            });
-    }
-
-    function isDataFresh() {
-        return lastFetchTime > 0 && (Date.now() - lastFetchTime) < DATA_FRESH_MS;
-    }
-
-    function msLeft() {
-        if (!lastFetchTime) return 0;
-        const left = DATA_FRESH_MS - (Date.now() - lastFetchTime);
-        return left > 0 ? left : 0;
-    }
-
-    function formatLeftTime() {
-        const ms = msLeft();
-        const total = Math.floor(ms / 1000);
-        const mm = Math.floor(total / 60);
-        const ss = total % 60;
-        return String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
-    }
-
     function applyReplacements() {
         const gameId = getCurrentGameId();
         if (!gameId) return;
@@ -137,7 +146,6 @@
         const links = document.querySelectorAll('a[href*="/hashes"]');
         links.forEach(function (original) {
             if (original.dataset.raReplaced === '1') return;
-
             const href = original.getAttribute('href') || '';
             if (!href.includes('/game/' + gameId + '/hashes')) return;
 
@@ -146,10 +154,8 @@
                 original.setAttribute('target', '_blank');
                 original.setAttribute('rel', 'noopener noreferrer');
                 removeCounterBadge(original);
-
                 const textNode = findTextNode(original);
                 if (textNode) textNode.textContent = DOWNLOAD_TEXT;
-
                 bindClick(original, entry.drive);
                 original.dataset.raReplaced = '1';
 
@@ -175,10 +181,8 @@
                 original.setAttribute('target', '_blank');
                 original.setAttribute('rel', 'noopener noreferrer');
                 removeCounterBadge(original);
-
                 const textNode = findTextNode(original);
                 if (textNode) textNode.textContent = RU_TEXT;
-
                 bindClick(original, entry.ru);
                 original.dataset.raReplaced = '1';
             }
@@ -187,18 +191,15 @@
 
     function findButtonByText(text) {
         const target = text.toLowerCase().replace(/\s+/g, ' ').trim();
-
         const candidates = document.querySelectorAll('button, a, [role="button"]');
         for (let i = 0; i < candidates.length; i++) {
             const el = candidates[i];
             if (el.closest('.dropdown-menu, [role="menu"], [hidden], [aria-hidden="true"]')) continue;
             if (el.classList.contains('dropdown-item')) continue;
             if (el.offsetParent === null && el.getClientRects().length === 0) continue;
-
             const t = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
             if (t === target) return el;
         }
-
         const groupButtons = document.querySelectorAll('button.group, a.group');
         for (let i = 0; i < groupButtons.length; i++) {
             const el = groupButtons[i];
@@ -206,15 +207,6 @@
             const t = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
             if (t === target) return el;
         }
-
-        for (let i = 0; i < candidates.length; i++) {
-            const el = candidates[i];
-            if (el.closest('.dropdown-menu, [role="menu"], [hidden]')) continue;
-            const title = (el.getAttribute('title') || '').toLowerCase();
-            const aria = (el.getAttribute('aria-label') || '').toLowerCase();
-            if (title === target || aria === target) return el;
-        }
-
         return null;
     }
 
@@ -236,14 +228,12 @@
         if (!gameId) return;
         const entry = GAME_ID_TO_URL[gameId];
         if (!entry || !entry.status || !STATUS_META[entry.status]) return;
-
         if (document.querySelector('[data-ra-status-badge="1"]')) return;
 
         const wantToPlay = findButtonByText('Want to Play');
         if (!wantToPlay) return;
 
         const meta = STATUS_META[entry.status];
-
         const badge = wantToPlay.cloneNode(true);
         badge.dataset.raStatusBadge = '1';
         badge.removeAttribute('href');
@@ -253,16 +243,13 @@
         badge.style.color = meta.color;
         badge.style.borderColor = meta.border;
         badge.style.background = meta.bg;
-
         badge.querySelectorAll('svg').forEach(function (el) { el.remove(); });
         badge.querySelectorAll('img').forEach(function (el) { el.remove(); });
         badge.textContent = '';
-
         const txt = document.createElement('span');
         txt.textContent = meta.text;
         txt.style.color = meta.color;
         badge.appendChild(txt);
-
         wantToPlay.insertAdjacentElement('beforebegin', badge);
 
         const parent = wantToPlay.parentElement;
@@ -289,15 +276,12 @@
         const re = /\[(ach|achievement|game|user)=([^\]\s]+)\]/gi;
         let lastIndex = 0;
         let m;
-
         while ((m = re.exec(raw)) !== null) {
             if (m.index > lastIndex) {
                 container.appendChild(document.createTextNode(raw.slice(lastIndex, m.index)));
             }
-
             const kind = m[1].toLowerCase();
             const value = m[2];
-
             if (kind === 'ach' || kind === 'achievement') {
                 const a = document.createElement('a');
                 a.className = 'ra-ach-card';
@@ -324,10 +308,8 @@
                 a.textContent = value;
                 container.appendChild(a);
             }
-
             lastIndex = re.lastIndex;
         }
-
         if (lastIndex < raw.length) {
             container.appendChild(document.createTextNode(raw.slice(lastIndex)));
         }
@@ -343,15 +325,12 @@
         const block = document.createElement('div');
         block.className = 'ra-game-comment';
         block.dataset.raComment = '1';
-
         const label = document.createElement('span');
         label.className = 'ra-game-comment-label';
         label.textContent = 'Комментарий';
-
         const text = document.createElement('div');
         text.className = 'ra-game-comment-text';
         renderCommentText(text, entry.comment);
-
         block.appendChild(label);
         block.appendChild(text);
 
@@ -371,7 +350,6 @@
                 }
             }
         }
-
         let shots = null;
         const candidates = document.querySelectorAll('div[class*="grid-cols-2"]');
         for (let i = 0; i < candidates.length; i++) {
@@ -380,12 +358,10 @@
                 break;
             }
         }
-
         if (shots) {
             shots.insertAdjacentElement('afterend', block);
             return;
         }
-
         if (baseSet) {
             let el = baseSet;
             for (let i = 0; i < 8; i++) {
@@ -420,6 +396,7 @@
         applyComment();
     }
 
+    // ---------- CSS ----------
     const CSS = [
         '.ra-game-comment { margin: 12px 0; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-left: 3px solid #4a90d9; border-radius: 6px; color: #d0d0d0; font-size: 14px; line-height: 1.6; word-break: break-word; }',
         '.ra-game-comment .ra-game-comment-label { display: block; font-size: 11px; color: #4a90d9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }',
@@ -430,370 +407,484 @@
         '.ra-game-comment .ra-ach-card:hover { background: rgba(74,144,217,0.2); text-decoration: none; }',
         '.ra-game-comment .ra-ach-card::before { content: "🏆"; font-size: 13px; }',
 
-        '#ra-replacer-panel { position: fixed; right: 20px; bottom: 20px; width: 720px; max-height: 80vh; background: #1e1e1e; color: #e6e6e6; border: 1px solid #444; border-radius: 10px; z-index: 999999; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }',
-        '#ra-replacer-panel.hidden { display: none; }',
-        '#ra-replacer-panel .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid #333; font-weight: 600; color: #f4a900; }',
-        '#ra-replacer-panel .header .close { background: transparent; border: none; color: #999; font-size: 18px; cursor: pointer; }',
-        '#ra-replacer-panel .header .close:hover { color: #fff; }',
-        '#ra-replacer-panel .body { padding: 12px 14px; overflow-y: auto; }',
-        '#ra-replacer-panel .row { display: grid; grid-template-columns: 60px 1fr 100px 28px 64px; gap: 6px; margin-bottom: 6px; align-items: center; padding: 4px 6px; border-radius: 5px; }',
-        '#ra-replacer-panel .row.has-comment { border-left: 3px solid #4a90d9; margin-left: -6px; padding-left: 8px; }',
-        '#ra-replacer-panel .row.current { background: rgba(244,169,0,0.10); border-left: 3px solid #f4a900; margin-left: -6px; padding-left: 8px; }',
-        '#ra-replacer-panel .row.current.has-comment { border-left-color: #f4a900; }',
-        '#ra-replacer-panel .row .id-cell { color: #bbb; font-family: monospace; font-size: 12px; text-align: right; padding-right: 4px; }',
-        '#ra-replacer-panel .row .name-cell { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e6e6e6; }',
-        '#ra-replacer-panel .row .name-cell a { color: #f4a900; text-decoration: none; }',
-        '#ra-replacer-panel .row .name-cell a:hover { text-decoration: underline; }',
-        '#ra-replacer-panel .row .status-cell { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
-        '#ra-replacer-panel input, #ra-replacer-panel select, #ra-replacer-panel textarea { background: #2a2a2a; border: 1px solid #444; color: #e6e6e6; padding: 4px 7px; border-radius: 5px; font-size: 12px; width: 100%; box-sizing: border-box; font-family: inherit; }',
-        '#ra-replacer-panel textarea { resize: vertical; min-height: 32px; }',
-        '#ra-replacer-panel input:focus, #ra-replacer-panel select:focus, #ra-replacer-panel textarea:focus { outline: none; border-color: #f4a900; }',
-        '#ra-replacer-panel .row.header-row { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }',
-        '#ra-replacer-panel button.act { background: #333; color: #e6e6e6; border: 1px solid #444; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; }',
-        '#ra-replacer-panel button.act:hover { background: #3d3d3d; }',
-        '#ra-replacer-panel button.act:disabled { opacity: 0.6; cursor: not-allowed; }',
-        '#ra-replacer-panel button.primary { background: #f4a900; color: #1a1a1a; border: none; font-weight: 600; }',
-        '#ra-replacer-panel button.primary:hover { background: #ffbe2e; }',
-        '#ra-replacer-panel .footer { padding: 12px 14px; border-top: 1px solid #333; display: flex; flex-wrap: wrap; gap: 6px; }',
-        '#ra-replacer-panel .toolbar { display: flex; gap: 6px; margin-bottom: 10px; }',
-        '#ra-replacer-panel .hint { font-size: 11px; color: #888; margin: 6px 0 0; }',
-        '#ra-replacer-panel .search { margin-bottom: 0; flex: 1; }',
-        '#ra-replacer-panel .row-btn { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 4px; }',
-        '#ra-replacer-panel .row-btn:hover { background: #333; }',
-        '#ra-replacer-panel .row-btn.go { color: #7ab8f5; }',
-        '#ra-replacer-panel .row-btn.edit { color: #f4a900; }',
-        '#ra-replacer-panel .row-btn.ok { color: #6ac46a; }',
-        '#ra-replacer-panel .row-btn.cancel { color: #d97a7a; }',
-        '#ra-replacer-panel .row-btn.del { color: #c96; }',
-        '#ra-replacer-panel .row-btn.del:hover { color: #f66; }',
-        '#ra-replacer-toast { position: fixed; bottom: 20px; left: 20px; background: #2e7d32; color: #fff; padding: 8px 14px; border-radius: 6px; font-size: 12px; z-index: 1000000; opacity: 0; transition: opacity .3s; pointer-events: none; }',
-        '#ra-replacer-toast.show { opacity: 1; }',
-        '#ra-replacer-toast.err { background: #c62828; }'
+        '#raru-panel { position: fixed; right: 20px; bottom: 20px; width: 1180px; max-width: 96vw; height: 760px; max-height: 92vh; background: #23272a; color: #dcddde; border: 1px solid #40444b; border-radius: 8px; z-index: 999999; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }',
+        '#raru-panel.hidden { display: none; }',
+        '#raru-panel .db-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #2c2f33; border-bottom: 1px solid #40444b; border-radius: 8px 8px 0 0; }',
+        '#raru-panel .db-title { font-weight: 600; color: #f4a900; font-size: 14px; display: flex; align-items: center; gap: 8px; }',
+        '#raru-panel .db-title::before { content: "🗃"; }',
+        '#raru-panel .db-header .db-status { color: #999; font-size: 12px; }',
+        '#raru-panel .db-header .db-status.err { color: #d97a7a; }',
+
+        '#raru-panel .db-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #40444b; background: #23272a; }',
+        '#raru-panel .db-toolbar button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; }',
+        '#raru-panel .db-toolbar button:hover { background: #4f545c; }',
+        '#raru-panel .db-toolbar button.primary { background: #2b6cb0; border-color: #3182ce; color: #fff; font-weight: 600; }',
+        '#raru-panel .db-toolbar button.primary:hover { background: #3182ce; }',
+        '#raru-panel .db-toolbar input[type="text"] { background: #2c2f33; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; flex: 1; min-width: 180px; max-width: 320px; }',
+        '#raru-panel .db-toolbar input[type="text"]:focus { outline: none; border-color: #f4a900; }',
+        '#raru-panel .db-toolbar select { background: #2c2f33; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; max-width: 220px; }',
+        '#raru-panel .db-toolbar select:focus { outline: none; border-color: #f4a900; }',
+        '#raru-panel .db-toolbar label.chk { display: inline-flex; align-items: center; gap: 4px; color: #b9bbbe; font-size: 12px; cursor: pointer; user-select: none; padding: 4px 6px; border-radius: 4px; }',
+        '#raru-panel .db-toolbar label.chk:hover { background: #2c2f33; color: #fff; }',
+        '#raru-panel .db-toolbar label.chk input { accent-color: #f4a900; margin: 0; }',
+        '#raru-panel .db-toolbar .counter { color: #888; font-size: 12px; margin-left: auto; white-space: nowrap; }',
+
+        '#raru-panel .db-table-wrap { flex: 1; overflow: auto; background: #23272a; }',
+        '#raru-panel table.db-table { width: 100%; border-collapse: collapse; font-size: 13px; }',
+        '#raru-panel table.db-table thead th { position: sticky; top: 0; background: #2c2f33; color: #b9bbbe; padding: 8px 10px; text-align: left; border-bottom: 1px solid #40444b; cursor: pointer; user-select: none; font-weight: 600; font-size: 12px; z-index: 2; }',
+        '#raru-panel table.db-table thead th:hover { color: #f4a900; }',
+        '#raru-panel table.db-table thead th.sorted-asc::after { content: " ▲"; color: #f4a900; font-size: 9px; }',
+        '#raru-panel table.db-table thead th.sorted-desc::after { content: " ▼"; color: #f4a900; font-size: 9px; }',
+        '#raru-panel table.db-table tbody tr { border-bottom: 1px solid #2c2f33; cursor: pointer; }',
+        '#raru-panel table.db-table tbody tr:nth-child(even) { background: #262a2d; }',
+        '#raru-panel table.db-table tbody tr:hover { background: #32363a; }',
+        '#raru-panel table.db-table tbody tr.selected { background: #2b6cb0; }',
+        '#raru-panel table.db-table tbody tr.selected td { color: #fff; }',
+        '#raru-panel table.db-table tbody td { padding: 6px 10px; vertical-align: top; color: #dcddde; }',
+        '#raru-panel table.db-table tbody td.id { font-family: monospace; color: #b9bbbe; width: 70px; }',
+        '#raru-panel table.db-table tbody td.console { color: #b9bbbe; width: 170px; font-size: 12px; }',
+        '#raru-panel table.db-table tbody td.name { color: #fff; }',
+        '#raru-panel table.db-table tbody td.status { width: 120px; font-size: 12px; }',
+        '#raru-panel table.db-table tbody td.links { width: 300px; font-size: 12px; }',
+        '#raru-panel .status-chip { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }',
+        '#raru-panel .link-pill { display: inline-block; padding: 1px 6px; border-radius: 3px; margin-right: 4px; font-size: 11px; }',
+        '#raru-panel .link-pill.drive { background: rgba(43,108,176,0.3); color: #63b3ed; }',
+        '#raru-panel .link-pill.ru { background: rgba(104,211,145,0.25); color: #68d391; }',
+        '#raru-panel .link-pill.comment { background: rgba(246,224,94,0.2); color: #f6e05e; }',
+        '#raru-panel .no-rows { padding: 20px; text-align: center; color: #888; font-style: italic; }',
+
+        '#raru-panel .db-details { border-top: 1px solid #40444b; background: #2c2f33; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-height: 130px; max-height: 200px; border-radius: 0 0 8px 8px; }',
+        '#raru-panel .db-details .detail-title { color: #f4a900; font-weight: 600; font-size: 14px; }',
+        '#raru-panel .db-details .detail-comment { font-size: 12px; color: #b9bbbe; white-space: pre-wrap; overflow-y: auto; flex: 1; max-height: 80px; }',
+        '#raru-panel .db-details .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }',
+        '#raru-panel .db-details .detail-actions button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 12px; font-weight: 600; }',
+        '#raru-panel .db-details .detail-actions button:hover { background: #4f545c; }',
+        '#raru-panel .db-details .detail-actions button.drive { background: #2b6cb0; border-color: #3182ce; color: #fff; }',
+        '#raru-panel .db-details .detail-actions button.drive:hover { background: #3182ce; }',
+        '#raru-panel .db-details .detail-actions button.ru { background: #276749; border-color: #38a169; color: #fff; }',
+        '#raru-panel .db-details .detail-actions button.ru:hover { background: #38a169; }',
+        '#raru-panel .db-details .detail-actions button:disabled { opacity: 0.4; cursor: not-allowed; }'
     ].join('\n');
 
     const styleEl = document.createElement('style');
     styleEl.textContent = CSS;
     (document.head || document.documentElement).appendChild(styleEl);
 
+    // ---------- Панель ----------
     const panel = document.createElement('div');
-    panel.id = 'ra-replacer-panel';
+    panel.id = 'raru-panel';
     panel.className = 'hidden';
     panel.innerHTML =
-        '<div class="header">' +
-            '<span>RA Hashes Replacer — Ctrl+Shift+E</span>' +
-            '<button class="close" title="Закрыть">✕</button>' +
+        '<div class="db-header">' +
+            '<div class="db-title">RA RU ROM Database</div>' +
+            '<div class="db-status" id="raru-db-status">—</div>' +
         '</div>' +
-        '<div class="body">' +
-            '<div class="toolbar">' +
-                '<input class="search" type="text" placeholder="Поиск по ID, названию или статусу..." />' +
-                '<button class="act" data-act="go-search" title="Перейти на страницу игры по ID">🔗 Перейти</button>' +
-                '<button class="act" data-act="add-current">+ Текущая игра</button>' +
-            '</div>' +
-            '<div class="row header-row">' +
-                '<div>ID</div><div>Название</div><div>Статус</div><div></div><div></div>' +
-            '</div>' +
-            '<div class="rows"></div>' +
-            '<p class="hint">В комментарии: [ach=ID], [achievement=ID], [game=ID], [user=ИМЯ].</p>' +
+        '<div class="db-toolbar">' +
+            '<button class="primary" data-act="fetch-remote">Обновить данные</button>' +
+            '<button data-act="export">Экспорт в файл</button>' +
+            '<input type="text" id="raru-search" placeholder="Поиск..." />' +
+            '<select id="raru-filter-console"><option value="">Все консоли</option></select>' +
+            '<select id="raru-filter-status">' +
+                '<option value="">Все статусы</option>' +
+                '<option value="mastering">Мастеринг</option>' +
+                '<option value="beaten">Битен</option>' +
+                '<option value="ru_impossible">Ру ром невозможен</option>' +
+                '<option value="__none__">Без статуса</option>' +
+            '</select>' +
+            '<label class="chk"><input type="checkbox" id="raru-filter-drive" /> 💾 Drive</label>' +
+            '<label class="chk"><input type="checkbox" id="raru-filter-ru" /> 🇷🇺 Русская</label>' +
+            '<label class="chk"><input type="checkbox" id="raru-filter-comment" /> 💬 Коммент</label>' +
+            '<button data-act="clear-filters">Сбросить</button>' +
+            '<span class="counter" id="raru-counter"></span>' +
         '</div>' +
-        '<div class="footer">' +
-            '<button class="act primary" data-act="fetch-remote">Получить последние данные</button>' +
-            '<button class="act" data-act="save" id="ra-save-btn">Сохранить</button>' +
-            '<button class="act" data-act="export">Экспорт в файл</button>' +
+        '<div class="db-table-wrap">' +
+            '<table class="db-table">' +
+                '<thead>' +
+                    '<tr>' +
+                        '<th data-sort="id">Game ID</th>' +
+                        '<th data-sort="console">Консоль</th>' +
+                        '<th data-sort="name">Название игры</th>' +
+                        '<th data-sort="status">Статус</th>' +
+                        '<th data-sort="links">Доступные файлы / Ссылки</th>' +
+                    '</tr>' +
+                '</thead>' +
+                '<tbody id="raru-tbody"></tbody>' +
+            '</table>' +
         '</div>' +
-        '<p class="hint" id="ra-save-hint" style="padding: 0 14px 12px; margin: 0;">Перед внесением данных убедитесь, что у вас последние данные — нажмите «Получить последние данные».</p>';
-
-    const toastEl = document.createElement('div');
-    toastEl.id = 'ra-replacer-toast';
+        '<div class="db-details" id="raru-details">' +
+            '<div class="detail-title" id="raru-detail-title">Выберите игру в списке</div>' +
+            '<div class="detail-comment" id="raru-detail-comment"></div>' +
+            '<div class="detail-actions" id="raru-detail-actions"></div>' +
+        '</div>';
 
     function mountUI() {
         if (!document.body) return setTimeout(mountUI, 50);
         document.body.appendChild(panel);
-        document.body.appendChild(toastEl);
-        renderRows();
-        updateSaveState();
+        bindUI();
+        rebuildConsoleOptions();
+        renderTable();
+        updateStatus();
     }
 
-    const rowsContainer = panel.querySelector('.rows');
-    const searchInput = panel.querySelector('.search');
+    const tbody = panel.querySelector('#raru-tbody');
+    const searchInput = panel.querySelector('#raru-search');
+    const filterConsoleSelect = panel.querySelector('#raru-filter-console');
+    const filterStatusSelect = panel.querySelector('#raru-filter-status');
+    const filterDriveChk = panel.querySelector('#raru-filter-drive');
+    const filterRuChk = panel.querySelector('#raru-filter-ru');
+    const filterCommentChk = panel.querySelector('#raru-filter-comment');
+    const dbStatus = panel.querySelector('#raru-db-status');
+    const counter = panel.querySelector('#raru-counter');
+    const detailTitle = panel.querySelector('#raru-detail-title');
+    const detailComment = panel.querySelector('#raru-detail-comment');
+    const detailActions = panel.querySelector('#raru-detail-actions');
 
-    let filterText = '';
-    let toastTimer = null;
-
-    function toast(msg, isErr) {
-        toastEl.textContent = msg;
-        toastEl.className = isErr ? 'err show' : 'show';
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () {
-            toastEl.className = isErr ? 'err' : '';
-        }, 2600);
+    function updateStatus(errMsg, isErr) {
+        if (errMsg) {
+            dbStatus.textContent = errMsg;
+            dbStatus.className = 'db-status err';
+            return;
+        }
+        if (dataLoading) {
+            dbStatus.textContent = 'Загрузка...';
+            dbStatus.className = 'db-status';
+            return;
+        }
+        if (!lastFetchTime) {
+            dbStatus.textContent = 'Данные не загружены';
+            dbStatus.className = 'db-status err';
+            return;
+        }
+        const msLeft = Math.max(0, DATA_FRESH_MS - (Date.now() - lastFetchTime));
+        const total = Math.floor(msLeft / 1000);
+        const mm = Math.floor(total / 60);
+        const ss = total % 60;
+        const t = new Date(lastFetchTime);
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        dbStatus.textContent = 'Обновлено: ' + pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds()) +
+            ' · до устаревания ' + pad(mm) + ':' + pad(ss);
+        dbStatus.className = 'db-status';
     }
 
-    function updateSaveState() {
-        const saveBtn = panel.querySelector('#ra-save-btn');
-        const hint = panel.querySelector('#ra-save-hint');
-        if (!saveBtn || !hint) return;
+    function getRows() {
+        const rows = [];
+        Object.keys(GAME_ID_TO_URL).forEach(function (id) {
+            const e = GAME_ID_TO_URL[id];
+            if (!e) return;
+            const parsed = parseName(e.name || '');
+            rows.push({
+                id: id,
+                idNum: parseInt(id, 10) || 0,
+                name: parsed.name || ('Игра #' + id),
+                console: parsed.console || '—',
+                status: e.status || '',
+                statusText: STATUS_META[e.status] ? STATUS_META[e.status].text : '',
+                comment: e.comment || '',
+                drive: e.drive || '',
+                ru: e.ru || ''
+            });
+        });
+        return rows;
+    }
 
-        if (!isDataFresh()) {
-            saveBtn.disabled = true;
-            saveBtn.title = 'Сначала получите последние данные';
-            if (lastFetchTime === 0) {
-                hint.textContent = 'Перед внесением данных убедитесь, что у вас последние данные — нажмите «Получить последние данные».';
-            } else {
-                hint.textContent = 'Данные устарели. Нажмите «Получить последние данные» ещё раз.';
+    function applyFilters(rows) {
+        let result = rows;
+
+        if (filterText) {
+            const f = filterText.toLowerCase();
+            result = result.filter(function (r) {
+                return (
+                    r.id.toLowerCase().indexOf(f) !== -1 ||
+                    r.name.toLowerCase().indexOf(f) !== -1 ||
+                    r.console.toLowerCase().indexOf(f) !== -1 ||
+                    r.statusText.toLowerCase().indexOf(f) !== -1 ||
+                    r.comment.toLowerCase().indexOf(f) !== -1
+                );
+            });
+        }
+
+        if (filterConsole) {
+            result = result.filter(function (r) { return r.console === filterConsole; });
+        }
+
+        if (filterStatus === '__none__') {
+            result = result.filter(function (r) { return !r.status; });
+        } else if (filterStatus) {
+            result = result.filter(function (r) { return r.status === filterStatus; });
+        }
+
+        if (filterDrive) {
+            result = result.filter(function (r) { return !!r.drive; });
+        }
+        if (filterRu) {
+            result = result.filter(function (r) { return !!r.ru; });
+        }
+        if (filterComment) {
+            result = result.filter(function (r) { return !!r.comment; });
+        }
+
+        return result;
+    }
+
+    function sortRows(rows) {
+        const dir = sortAsc ? 1 : -1;
+        rows.sort(function (a, b) {
+            let va, vb;
+            switch (sortColumn) {
+                case 'console': va = a.console.toLowerCase(); vb = b.console.toLowerCase(); break;
+                case 'name':    va = a.name.toLowerCase();    vb = b.name.toLowerCase();    break;
+                case 'status':  va = a.statusText.toLowerCase(); vb = b.statusText.toLowerCase(); break;
+                case 'links':   va = (a.drive ? 1 : 0) + (a.ru ? 1 : 0) + (a.comment ? 1 : 0); vb = (b.drive ? 1 : 0) + (b.ru ? 1 : 0) + (b.comment ? 1 : 0); break;
+                default:        va = a.idNum; vb = b.idNum;
             }
-            hint.style.color = '#d97a7a';
-        } else {
-            saveBtn.disabled = false;
-            saveBtn.title = 'Сохранить изменения';
-            hint.textContent = 'Данные свежие. Можно сохранять. Осталось: ' + formatLeftTime();
-            hint.style.color = '#6ac46a';
-        }
+            if (va < vb) return -1 * dir;
+            if (va > vb) return 1 * dir;
+            return 0;
+        });
+        return rows;
     }
 
-    function navigateToGame(id) {
-        if (!id || !/^\d+$/.test(String(id))) {
-            toast('Введите числовой ID игры', true);
-            return false;
-        }
-        window.location.href = 'https://retroachievements.org/game/' + id;
-        return true;
-    }
-
-    function renderRows() {
-        rowsContainer.innerHTML = '';
-        const currentId = getCurrentGameId();
-
-        const ids = Object.keys(GAME_ID_TO_URL).sort(function (a, b) {
-            if (a === currentId) return -1;
-            if (b === currentId) return 1;
-            const na = parseInt(a, 10), nb = parseInt(b, 10);
-            if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    function rebuildConsoleOptions() {
+        const rows = getRows();
+        const unique = new Set();
+        rows.forEach(function (r) {
+            if (r.console && r.console !== '—') unique.add(r.console);
+        });
+        const list = Array.from(unique).sort(function (a, b) {
             return a.localeCompare(b);
         });
 
-        ids.forEach(function (id) {
-            const entry = GAME_ID_TO_URL[id] || {};
-            const displayName = entry.name ? entry.name : ('Игра #' + id);
+        const currentValue = filterConsole;
+        filterConsoleSelect.innerHTML = '<option value="">Все консоли</option>';
+        list.forEach(function (c) {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            filterConsoleSelect.appendChild(opt);
+        });
+        if (currentValue && list.indexOf(currentValue) !== -1) {
+            filterConsoleSelect.value = currentValue;
+        } else {
+            filterConsole = '';
+        }
+    }
 
-            if (filterText) {
-                const f = filterText.toLowerCase();
-                const haystack = (id + ' ' + displayName + ' ' + (entry.drive || '') + ' ' + (entry.ru || '') + ' ' + (entry.status || '') + ' ' + (entry.comment || '')).toLowerCase();
-                if (haystack.indexOf(f) === -1) return;
-            }
+    function renderTable() {
+        const allRows = getRows();
+        const filtered = applyFilters(allRows);
+        const rows = sortRows(filtered);
 
-            const row = document.createElement('div');
-            row.className = 'row';
-            if (id === currentId) row.classList.add('current');
-            if (entry.comment) row.classList.add('has-comment');
-            row.dataset.id = id;
-            row.dataset.mode = 'view';
+        counter.textContent = 'Найдено: ' + rows.length + ' из ' + allRows.length;
 
-            const idCell = document.createElement('div');
-            idCell.className = 'id-cell';
-            idCell.textContent = id;
+        tbody.innerHTML = '';
+        if (rows.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 5;
+            td.className = 'no-rows';
+            td.textContent = 'Ничего не найдено';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
 
-            const nameCell = document.createElement('div');
-            nameCell.className = 'name-cell';
+        rows.forEach(function (r) {
+            const tr = document.createElement('tr');
+            if (r.id === selectedGameId) tr.classList.add('selected');
+            tr.dataset.id = r.id;
 
-            let href = null;
-            if (entry.drive) href = entry.drive;
-            else if (entry.ru) href = entry.ru;
-            else href = 'https://retroachievements.org/game/' + id;
+            const tdId = document.createElement('td');
+            tdId.className = 'id';
+            tdId.textContent = r.id;
 
-            const a = document.createElement('a');
-            a.href = href;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.textContent = displayName;
-            a.title = displayName;
-            nameCell.appendChild(a);
+            const tdConsole = document.createElement('td');
+            tdConsole.className = 'console';
+            tdConsole.textContent = r.console;
 
-            const statusCell = document.createElement('div');
-            statusCell.className = 'status-cell';
-            if (entry.status && STATUS_META[entry.status]) {
-                const m = STATUS_META[entry.status];
+            const tdName = document.createElement('td');
+            tdName.className = 'name';
+            tdName.textContent = r.name;
+
+            const tdStatus = document.createElement('td');
+            tdStatus.className = 'status';
+            if (r.status && STATUS_META[r.status]) {
+                const m = STATUS_META[r.status];
                 const chip = document.createElement('span');
+                chip.className = 'status-chip';
                 chip.textContent = m.text;
                 chip.style.color = m.color;
-                chip.style.border = '1px solid ' + m.border;
                 chip.style.background = m.bg;
-                chip.style.padding = '1px 6px';
-                chip.style.borderRadius = '4px';
-                chip.style.fontWeight = '600';
-                statusCell.appendChild(chip);
+                chip.style.border = '1px solid ' + m.border;
+                tdStatus.appendChild(chip);
             } else {
-                statusCell.textContent = '—';
-                statusCell.style.color = '#666';
+                tdStatus.textContent = '—';
+                tdStatus.style.color = '#666';
             }
 
-            const goBtn = document.createElement('button');
-            goBtn.className = 'row-btn go';
-            goBtn.textContent = '🔗';
-            goBtn.title = 'Перейти на страницу игры';
-            goBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                navigateToGame(id);
-            });
-
-            const actionsCell = document.createElement('div');
-            actionsCell.style.display = 'flex';
-            actionsCell.style.gap = '2px';
-
-            const editBtn = document.createElement('button');
-            editBtn.className = 'row-btn edit';
-            editBtn.textContent = '✎';
-            editBtn.title = 'Редактировать';
-            editBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isDataFresh()) {
-                    toast('Сначала получите последние данные', true);
-                    return;
-                }
-                enterEditMode(row, id);
-            });
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'row-btn del';
-            delBtn.textContent = '🗑';
-            delBtn.title = 'Удалить';
-            delBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isDataFresh()) {
-                    toast('Сначала получите последние данные', true);
-                    return;
-                }
-                delete GAME_ID_TO_URL[id];
-                saveData(GAME_ID_TO_URL);
-                hasChanges = true;
-                renderRows();
-                refreshAll();
-            });
-
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(delBtn);
-
-            row.appendChild(idCell);
-            row.appendChild(nameCell);
-            row.appendChild(statusCell);
-            row.appendChild(goBtn);
-            row.appendChild(actionsCell);
-
-            rowsContainer.appendChild(row);
-        });
-    }
-
-    function enterEditMode(row, id) {
-        const entry = GAME_ID_TO_URL[id] || {};
-        row.dataset.mode = 'edit';
-        row.innerHTML = '';
-
-        row.style.gridTemplateColumns = '60px 1fr 1fr 1fr 90px 64px';
-        row.style.gridTemplateRows = 'auto auto';
-
-        const idCell = document.createElement('div');
-        idCell.className = 'id-cell';
-        idCell.textContent = id;
-
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.value = entry.name || '';
-        nameInput.placeholder = 'Название игры (например: Resident Evil 4 (PS2))';
-
-        const driveInput = document.createElement('input');
-        driveInput.type = 'text';
-        driveInput.value = entry.drive || '';
-        driveInput.placeholder = 'https://drive.google.com/...';
-
-        const ruInput = document.createElement('input');
-        ruInput.type = 'text';
-        ruInput.value = entry.ru || '';
-        ruInput.placeholder = 'Русская версия (опционально)';
-
-        const statusSelect = document.createElement('select');
-        STATUS_OPTIONS.forEach(function (opt) {
-            const o = document.createElement('option');
-            o.value = opt.value;
-            o.textContent = opt.label;
-            statusSelect.appendChild(o);
-        });
-        statusSelect.value = entry.status || '';
-
-        const actionsCell = document.createElement('div');
-        actionsCell.style.display = 'flex';
-        actionsCell.style.gap = '2px';
-
-        const okBtn = document.createElement('button');
-        okBtn.className = 'row-btn ok';
-        okBtn.textContent = '✓';
-        okBtn.title = 'Сохранить';
-        okBtn.addEventListener('click', function () {
-            const nameVal = nameInput.value.trim();
-            const driveVal = driveInput.value.trim();
-            const ruVal = ruInput.value.trim();
-            const statusVal = statusSelect.value;
-            const commentVal = commentInput.value.trim();
-
-            if (!nameVal && !driveVal && !ruVal && !statusVal && !commentVal) {
-                delete GAME_ID_TO_URL[id];
-            } else {
-                const obj = {};
-                if (nameVal) obj.name = nameVal;
-                if (driveVal) obj.drive = driveVal;
-                if (ruVal) obj.ru = ruVal;
-                if (statusVal) obj.status = statusVal;
-                if (commentVal) obj.comment = commentVal;
-                GAME_ID_TO_URL[id] = obj;
+            const tdLinks = document.createElement('td');
+            tdLinks.className = 'links';
+            if (r.drive) {
+                const s = document.createElement('span');
+                s.className = 'link-pill drive';
+                s.textContent = '💾 Drive';
+                tdLinks.appendChild(s);
             }
-            saveData(GAME_ID_TO_URL);
-            hasChanges = true;
-            renderRows();
-            refreshAll();
+            if (r.ru) {
+                const s = document.createElement('span');
+                s.className = 'link-pill ru';
+                s.textContent = '🇷🇺 Русская версия';
+                tdLinks.appendChild(s);
+            }
+            if (r.comment) {
+                const s = document.createElement('span');
+                s.className = 'link-pill comment';
+                s.textContent = '💬 Комментарий';
+                tdLinks.appendChild(s);
+            }
+            if (!r.drive && !r.ru && !r.comment) {
+                tdLinks.textContent = '—';
+                tdLinks.style.color = '#666';
+            }
+
+            tr.appendChild(tdId);
+            tr.appendChild(tdConsole);
+            tr.appendChild(tdName);
+            tr.appendChild(tdStatus);
+            tr.appendChild(tdLinks);
+
+            tr.addEventListener('click', function () {
+                selectedGameId = r.id;
+                renderTable();
+                renderDetails();
+            });
+
+            tbody.appendChild(tr);
         });
-
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'row-btn cancel';
-        cancelBtn.textContent = '✕';
-        cancelBtn.title = 'Отмена';
-        cancelBtn.addEventListener('click', function () {
-            renderRows();
-        });
-
-        actionsCell.appendChild(okBtn);
-        actionsCell.appendChild(cancelBtn);
-
-        const commentInput = document.createElement('textarea');
-        commentInput.value = entry.comment || '';
-        commentInput.placeholder = 'Комментарий. Ссылки: [ach=ID], [game=ID], [user=ИМЯ]';
-        commentInput.rows = 2;
-        commentInput.style.gridColumn = '2 / span 5';
-        commentInput.style.gridRow = '2';
-
-        row.appendChild(idCell);
-        row.appendChild(nameInput);
-        row.appendChild(driveInput);
-        row.appendChild(ruInput);
-        row.appendChild(statusSelect);
-        row.appendChild(actionsCell);
-        row.appendChild(commentInput);
     }
 
-    function saveData(data) {
-        GM_setValue(STORAGE_KEY, JSON.stringify(data));
-    }
-
-    searchInput.addEventListener('input', function () {
-        filterText = searchInput.value.trim();
-        renderRows();
-    });
-
-    searchInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && /^\d+$/.test(searchInput.value.trim())) {
-            navigateToGame(searchInput.value.trim());
+    function renderDetails() {
+        detailActions.innerHTML = '';
+        if (!selectedGameId || !GAME_ID_TO_URL[selectedGameId]) {
+            detailTitle.textContent = 'Выберите игру в списке';
+            detailComment.textContent = '';
+            return;
         }
-    });
+        const r = getRows().find(function (x) { return x.id === selectedGameId; });
+        if (!r) return;
+
+        detailTitle.textContent = '[' + r.id + '] ' + r.name + (r.console && r.console !== '—' ? ' (' + r.console + ')' : '');
+        detailComment.textContent = r.comment || '';
+
+        const btnDrive = document.createElement('button');
+        btnDrive.className = 'drive';
+        btnDrive.textContent = '💾 Скачать Game (Drive)';
+        btnDrive.disabled = !r.drive;
+        if (r.drive) {
+            btnDrive.addEventListener('click', function () {
+                window.open(r.drive, '_blank', 'noopener,noreferrer');
+            });
+        }
+        detailActions.appendChild(btnDrive);
+
+        const btnRu = document.createElement('button');
+        btnRu.className = 'ru';
+        btnRu.textContent = '🇷🇺 Русская версия';
+        btnRu.disabled = !r.ru;
+        if (r.ru) {
+            btnRu.addEventListener('click', function () {
+                window.open(r.ru, '_blank', 'noopener,noreferrer');
+            });
+        }
+        detailActions.appendChild(btnRu);
+
+        const btnRa = document.createElement('button');
+        btnRa.textContent = '🔗 Страница на RA';
+        btnRa.addEventListener('click', function () {
+            window.open('https://retroachievements.org/game/' + r.id, '_blank', 'noopener,noreferrer');
+        });
+        detailActions.appendChild(btnRa);
+    }
+
+    function clearFilters() {
+        filterText = '';
+        filterConsole = '';
+        filterStatus = '';
+        filterDrive = false;
+        filterRu = false;
+        filterComment = false;
+        searchInput.value = '';
+        filterConsoleSelect.value = '';
+        filterStatusSelect.value = '';
+        filterDriveChk.checked = false;
+        filterRuChk.checked = false;
+        filterCommentChk.checked = false;
+        renderTable();
+    }
+
+    function bindUI() {
+        searchInput.addEventListener('input', function () {
+            filterText = searchInput.value.trim();
+            renderTable();
+        });
+
+        filterConsoleSelect.addEventListener('change', function () {
+            filterConsole = filterConsoleSelect.value;
+            renderTable();
+        });
+
+        filterStatusSelect.addEventListener('change', function () {
+            filterStatus = filterStatusSelect.value;
+            renderTable();
+        });
+
+        filterDriveChk.addEventListener('change', function () {
+            filterDrive = filterDriveChk.checked;
+            renderTable();
+        });
+        filterRuChk.addEventListener('change', function () {
+            filterRu = filterRuChk.checked;
+            renderTable();
+        });
+        filterCommentChk.addEventListener('change', function () {
+            filterComment = filterCommentChk.checked;
+            renderTable();
+        });
+
+        panel.querySelectorAll('th[data-sort]').forEach(function (th) {
+            th.addEventListener('click', function () {
+                const col = th.dataset.sort;
+                if (sortColumn === col) {
+                    sortAsc = !sortAsc;
+                } else {
+                    sortColumn = col;
+                    sortAsc = true;
+                }
+                panel.querySelectorAll('th[data-sort]').forEach(function (t) {
+                    t.classList.remove('sorted-asc', 'sorted-desc');
+                });
+                th.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+                renderTable();
+            });
+        });
+
+        panel.addEventListener('click', function (e) {
+            const btn = e.target.closest('button[data-act]');
+            if (!btn) return;
+            const act = btn.dataset.act;
+
+            if (act === 'fetch-remote') {
+                fetchRemoteData()
+                    .then(function () { renderTable(); })
+                    .catch(function (err) {
+                        console.error('[RA Replacer] fetch error:', err);
+                    });
+            } else if (act === 'export') {
+                exportToFile();
+            } else if (act === 'clear-filters') {
+                clearFilters();
+            }
+        });
+    }
 
     function exportToFile() {
         const json = JSON.stringify(GAME_ID_TO_URL, null, 2);
@@ -806,107 +897,7 @@
         a.click();
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        toast('Файл сохранён: rahashesreplacer.json');
     }
-
-    function onTimerExpired() {
-        if (hasChanges) {
-            exportToFile();
-            hasChanges = false;
-            setTimeout(function () {
-                const ok = confirm(
-                    'Время истекло, но вы вносили изменения.\n\n' +
-                    'Файл rahashesreplacer.json сохранён на компьютер.\n' +
-                    'Залейте его в репозиторий GitHub, чтобы изменения увидели все.\n\n' +
-                    'Получить последние данные с GitHub сейчас?'
-                );
-                if (ok) {
-                    fetchRemoteData()
-                        .then(function () {
-                            toast('Данные обновлены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
-                            updateSaveState();
-                        })
-                        .catch(function (err) {
-                            toast('Не удалось получить данные: ' + err.message, true);
-                        });
-                }
-            }, 400);
-        } else {
-            lastFetchTime = 0;
-            GM_setValue(TIME_KEY, 0);
-            updateSaveState();
-        }
-    }
-
-    panel.addEventListener('click', function (e) {
-        const btn = e.target.closest('button[data-act]');
-        if (!btn) return;
-        const act = btn.dataset.act;
-
-        if (act === 'save') {
-            if (!isDataFresh()) {
-                toast('Сначала получите последние данные — нажмите «Получить последние данные»', true);
-                return;
-            }
-            saveData(GAME_ID_TO_URL);
-            hasChanges = true;
-            toast('Сохранено локально');
-            refreshAll();
-        } else if (act === 'add-current') {
-            if (!isDataFresh()) {
-                toast('Сначала получите последние данные', true);
-                return;
-            }
-            const currentId = getCurrentGameId();
-            if (!currentId) {
-                toast('Откройте страницу игры, чтобы добавить её', true);
-                return;
-            }
-            if (!GAME_ID_TO_URL[currentId]) {
-                GAME_ID_TO_URL[currentId] = {};
-                saveData(GAME_ID_TO_URL);
-                hasChanges = true;
-            }
-            renderRows();
-            const row = rowsContainer.querySelector('.row[data-id="' + currentId + '"]');
-            if (row) {
-                enterEditMode(row, currentId);
-                const nameInput = row.querySelector('input');
-                if (nameInput) nameInput.focus();
-            }
-        } else if (act === 'export') {
-            exportToFile();
-        } else if (act === 'fetch-remote') {
-            btn.disabled = true;
-            const orig = btn.textContent;
-            btn.textContent = 'Загрузка...';
-            fetchRemoteData()
-                .then(function () {
-                    btn.disabled = false;
-                    btn.textContent = orig;
-                    toast('Данные получены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
-                    updateSaveState();
-                })
-                .catch(function (err) {
-                    btn.disabled = false;
-                    btn.textContent = orig;
-                    toast('Ошибка: ' + err.message, true);
-                });
-        } else if (act === 'go-search') {
-            const v = searchInput.value.trim();
-            if (/^\d+$/.test(v)) {
-                navigateToGame(v);
-            } else {
-                const m = v.match(/\/game\/(\d+)/);
-                if (m) navigateToGame(m[1]);
-                else toast('Введите ID игры или ссылку на неё', true);
-            }
-        }
-    });
-
-    panel.querySelector('.close').addEventListener('click', function () {
-        panel.classList.add('hidden');
-    });
 
     document.addEventListener('keydown', function (e) {
         if (e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e' || e.code === 'KeyE')) {
@@ -914,8 +905,10 @@
             e.stopPropagation();
             panel.classList.toggle('hidden');
             if (!panel.classList.contains('hidden')) {
-                renderRows();
-                updateSaveState();
+                rebuildConsoleOptions();
+                renderTable();
+                renderDetails();
+                updateStatus();
             }
         }
     }, true);
@@ -923,12 +916,10 @@
     function injectMenuItems() {
         const signOut = findMenuLinkByText('Sign out');
         if (!signOut) return;
-
         if (document.querySelector('[data-ra-menu="1"]')) return;
 
         const dataItem = signOut.cloneNode(true);
         dataItem.dataset.raMenu = '1';
-        dataItem.dataset.raFetchData = '1';
         dataItem.removeAttribute('href');
         dataItem.style.cursor = 'pointer';
         setTextContent(dataItem, 'Получить последние данные');
@@ -936,23 +927,11 @@
         dataItem.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            if (dataLoading) return;
-            dataLoading = true;
-
-            const orig = dataItem.textContent;
-            dataItem.textContent = 'Загрузка...';
-
             fetchRemoteData()
                 .then(function () {
-                    dataItem.textContent = orig;
-                    dataLoading = false;
                     alert('Данные получены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
-                    updateSaveState();
                 })
                 .catch(function (err) {
-                    console.error('[RA Replacer] fetch error:', err);
-                    dataItem.textContent = orig;
-                    dataLoading = false;
                     alert('Не удалось получить данные: ' + err.message);
                 });
         });
@@ -967,9 +946,7 @@
             const el = candidates[i];
             if (el.children.length > 2) continue;
             const t = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-            if (t === target) {
-                return el;
-            }
+            if (t === target) return el;
         }
         return null;
     }
@@ -981,9 +958,7 @@
             catch (e) {}
         }
         const savedTime = GM_getValue(TIME_KEY, 0);
-        if (savedTime && typeof savedTime === 'number') {
-            lastFetchTime = savedTime;
-        }
+        if (savedTime && typeof savedTime === 'number') lastFetchTime = savedTime;
     } catch (e) {}
 
     function tick() {
@@ -993,12 +968,14 @@
             applyComment();
         }
         injectMenuItems();
-        if (!panel.classList.contains('hidden')) updateSaveState();
-
+        if (!panel.classList.contains('hidden')) updateStatus();
         const nowFresh = isDataFresh();
         if (wasFresh && !nowFresh) {
             wasFresh = false;
-            onTimerExpired();
+            if (hasChanges) {
+                exportToFile();
+                hasChanges = false;
+            }
         } else if (nowFresh) {
             wasFresh = true;
         }
@@ -1012,7 +989,7 @@
 
     setInterval(tick, 500);
     setInterval(function () {
-        if (!panel.classList.contains('hidden')) updateSaveState();
+        if (!panel.classList.contains('hidden')) updateStatus();
     }, 1000);
     window.addEventListener('load', tick);
     document.addEventListener('DOMContentLoaded', tick);
