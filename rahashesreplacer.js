@@ -1,18 +1,15 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      6.9
-// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с Яндекс.Диска вручную.
+// @version      7.0
+// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. Данные тянутся с GitHub.
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @connect      cloud-api.yandex.net
-// @connect      disk.yandex.ru
-// @connect      yandex.net
-// @connect      downloader.disk.yandex.ru
+// @connect      raw.githubusercontent.com
 // @updateURL    https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @downloadURL  https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @run-at       document-idle
@@ -21,7 +18,7 @@
 (function () {
     'use strict';
 
-    const REMOTE_PUBLIC_URL = 'https://disk.yandex.ru/d/Ggt6hPg-FCsu_w';
+    const REMOTE_PUBLIC_URL = 'https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.json';
     const STORAGE_KEY = 'ra_hashes_replacer_data';
     const TIME_KEY = 'ra_hashes_replacer_last_fetch';
     const DOWNLOAD_TEXT = 'Download Game';
@@ -93,21 +90,8 @@
         });
     }
 
-    function yandexResolve(publicUrl) {
-        const api = 'https://cloud-api.yandex.net/v1/disk/public/resources/download'
-                  + '?public_key=' + encodeURIComponent(publicUrl);
-        return gmFetch(api).then(function (text) {
-            let json;
-            try { json = JSON.parse(text); }
-            catch (e) { throw new Error('API Диска вернул не JSON'); }
-            if (!json.href) throw new Error('Не удалось получить ссылку на файл (возможно, файл не публичный)');
-            return json.href;
-        });
-    }
-
     function fetchRemoteData() {
-        return yandexResolve(REMOTE_PUBLIC_URL)
-            .then(function (href) { return gmFetch(href); })
+        return gmFetch(REMOTE_PUBLIC_URL)
             .then(function (text) {
                 let parsed;
                 try { parsed = JSON.parse(text); }
@@ -509,7 +493,7 @@
                 '<div>ID</div><div>Название</div><div>Статус</div><div></div><div></div>' +
             '</div>' +
             '<div class="rows"></div>' +
-            '<p class="hint">В комментарии: [ach=ID], [achievement=ID], [game=ID], [user=ИМЯ]. Название игры задаётся вручную в режиме редактирования (✎).</p>' +
+            '<p class="hint">В комментарии: [ach=ID], [achievement=ID], [game=ID], [user=ИМЯ].</p>' +
         '</div>' +
         '<div class="footer">' +
             '<button class="act primary" data-act="fetch-remote">Получить последние данные</button>' +
@@ -825,7 +809,6 @@
         toast('Файл сохранён: rahashesreplacer.json');
     }
 
-    // Срабатывает один раз при истечении часа
     function onTimerExpired() {
         if (hasChanges) {
             exportToFile();
@@ -834,8 +817,8 @@
                 const ok = confirm(
                     'Время истекло, но вы вносили изменения.\n\n' +
                     'Файл rahashesreplacer.json сохранён на компьютер.\n' +
-                    'Залейте его на Яндекс.Диск, чтобы изменения увидели все.\n\n' +
-                    'Получить последние данные с Яндекс.Диска сейчас?'
+                    'Залейте его в репозиторий GitHub, чтобы изменения увидели все.\n\n' +
+                    'Получить последние данные с GitHub сейчас?'
                 );
                 if (ok) {
                     fetchRemoteData()
@@ -991,7 +974,6 @@
         return null;
     }
 
-    // Восстанавливаем данные и время из локального хранилища.
     try {
         const cached = GM_getValue(STORAGE_KEY, null);
         if (cached) {
@@ -1013,7 +995,6 @@
         injectMenuItems();
         if (!panel.classList.contains('hidden')) updateSaveState();
 
-        // Ловим момент, когда час истёк
         const nowFresh = isDataFresh();
         if (wasFresh && !nowFresh) {
             wasFresh = false;
