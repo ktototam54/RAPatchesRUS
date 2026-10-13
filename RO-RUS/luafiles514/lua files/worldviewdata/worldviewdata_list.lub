@@ -1,0 +1,16 @@
+-- Original translation works of zackdreaver: https://github.com/zackdreaver/ROenglishRE
+-- Continuated by llchrisll at https://github.com/llchrisll/ROenglishRE
+-- Этот файл можно свободно распространять, использовать и изменять
+-- Этот файл не должен заявляться как часть вашего проекта, если вы не форкнули его с https://github.com/llchrisll/ROenglishRE
+-- Последнее обновление: 20250416
+
+World_List = {
+	{ "Мидгард", "worldtable_main", "worldtable_main_Dun", "worldmap.jpg" },
+	{ "Северный Мидгард", "worldtable_north", "worldtable_north_Dun", "midgard_north.jpg" },
+	{ "Мидгард Pw02", "WorldMap_Pw02", "WorldMap_Pw02_Dun", "WorldMap_Pw-02.jpg" }, 
+	{ "Измерение", "worldtable_dimensions", "worldtable_dimensions_Dun", "worldmap_dimension.bmp" },
+	{ "Разлом", "worldtable_Crack_of_Dimension1", "worldtable_Crack_of_Dimension1_Dun", "Crack_of_Dimension1.jpg" },
+	{ "Локализация 01", "worldtable_localizing1", "worldtable_localizing1_Dun", "worldmap_localizing1.bmp" },
+	{ "Локализация 02", "worldtable_localizing2", "worldtable_localizing2_Dun", "worldmap_localizing2.bmp" },
+	{ "Дальняя звезда", "worldtable_Doram", "worldtable_Doram_Dun", "pasta.jpg" },
+}
