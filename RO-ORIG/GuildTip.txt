@@ -1,0 +1,58 @@
+[ Guild Creation ]
+ 1. To make a guild, you need an "Emperium"
+ 2. If you have obtained an Emperium 
+ you can create a guild by typing
+ /guild "guild name" or pressing
+ "Create Guild" Button.
+ 3. The guild window is accessed by pressing 
+ Alt+G.
+#
+[ Guild Information ] 
+ 1. You can check information regarding
+ Guild Name, EXP, Guild Level, Guild Emblem,
+ Master Name, Number of Members,
+ Average Member Level, Allies and Hostile Guilds.
+ 
+ 2. Member Information: 
+ Allows you to see guild member's information.
+ If you have privilege, you can kick someone
+ out the guild, or leave the guild yourself
+ by right clicking.
+ 
+ 3. Position Setting: 
+ You can set the rank and guild experience
+ points contributed by members.
+ Contributions are possible up
+ to a maximum of 50%.
+ Experience point information contributed
+ to the guild is reset upon leaving the guild.
+ 
+ 4. Guild Skills: 
+ When a Guild levels up, the guild master
+ can use points to advance guild skills by
+ investing in them once they are available.
+ 
+ 5. Expel List: 
+ Displays the list of members expelled
+ from the guild and the reasons for expulsion.
+ 
+ 6. Announcements:
+ The Guild Master can notify members of
+ various announcements through the chat window.
+#
+[ Guild Emblems ]
+ 1. Create an emblem in 256-color bitmap (BMP)
+ format with a size of 24x24 pixels.
+ 
+ 2. Create an "Emblem" folder in the folder
+ where Ragnarok is installed and copy
+ the emblem image file into it.
+ 
+ 3. You can apply the emblem by
+ pressing the "Edit" button located
+ where the emblem is displayed in the
+ Guild Information window.
+ 
+ 4. Only the Guild Master can change the emblem
+ and it can be changed at any time.
+#
