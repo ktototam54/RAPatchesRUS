@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      8.7
-// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных.
+// @version      9.1
+// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных. Название игры подтягивается с RA API.
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -10,6 +10,7 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @connect      raw.githubusercontent.com
+// @connect      retroachievements.org
 // @updateURL    https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @downloadURL  https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.js
 // @run-at       document-idle
@@ -22,6 +23,14 @@
     const STORAGE_KEY = 'ra_hashes_replacer_data';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
+
+    // Служебные данные
+    const APP_CFG_A = 'U2lhbm9y';
+    const APP_CFG_B = 'NDAxbHpRcWxjRFJvQ3ZjNFFXYXJTbzFNbEFHZm5UTEI=';
+
+    function decodeCfg(str) {
+        try { return atob(str); } catch (e) { return ''; }
+    }
 
     const STATUS_META = {
         mastering:     { text: 'Мастеринг',         color: '#f4a900', bg: 'rgba(244,169,0,0.15)',   border: '#f4a900' },
@@ -68,6 +77,29 @@
                 ontimeout: function () { reject(new Error('Таймаут')); },
                 timeout: 20000
             });
+        });
+    }
+
+    function fetchGameInfo(gameId) {
+        const u = decodeCfg(APP_CFG_A);
+        const k = decodeCfg(APP_CFG_B);
+        const url = 'https://retroachievements.org/API/API_GetGame.php'
+                  + '?z=' + encodeURIComponent(u)
+                  + '&y=' + encodeURIComponent(k)
+                  + '&i=' + encodeURIComponent(gameId);
+        return gmFetch(url).then(function (text) {
+            let data;
+            try { data = JSON.parse(text); } catch (e) { throw new Error('RA API вернул не JSON'); }
+            if (data.error || data.message) {
+                throw new Error(data.message || 'ошибка RA API');
+            }
+            const title = data.Title || '';
+            const cons = data.ConsoleName || '';
+            return {
+                title: title,
+                console: cons,
+                full: title + (cons ? ' (' + cons + ')' : '')
+            };
         });
     }
 
@@ -486,11 +518,13 @@
         '#raru-panel .edit-row { display: flex; gap: 8px; align-items: center; }',
         '#raru-panel .edit-row label { color: #b9bbbe; font-size: 12px; min-width: 130px; }',
         '#raru-panel .edit-row input, #raru-panel .edit-row select, #raru-panel .edit-row textarea { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; font-family: inherit; flex: 1; box-sizing: border-box; }',
+        '#raru-panel .edit-row input[readonly] { opacity: 0.7; cursor: not-allowed; }',
         '#raru-panel .edit-row textarea { min-height: 55px; resize: vertical; }',
         '#raru-panel .edit-row input:focus, #raru-panel .edit-row select:focus, #raru-panel .edit-row textarea:focus { outline: none; border-color: #f4a900; }',
         '#raru-panel .edit-header { font-size: 12px; color: #f4a900; font-weight: 600; margin-bottom: 4px; }',
+        '#raru-panel .edit-row .refresh-name { background: #6b4f1c; color: #fff; border: 1px solid #8a6a2a; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }',
+        '#raru-panel .edit-row .refresh-name:hover { background: #8a6a2a; }',
 
-        // Тосты — правый нижний угол
         '#raru-toast { position: fixed; right: 20px; bottom: 20px; background: #2e7d32; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 13px; z-index: 1000001; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; pointer-events: none; max-width: 400px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }',
         '#raru-toast.show { opacity: 1; transform: translateY(0); }',
         '#raru-toast.err { background: #c62828; }',
@@ -875,9 +909,30 @@
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.value = entry.name || '';
-        nameInput.placeholder = 'Resident Evil 4 (PlayStation 2)';
+        nameInput.readOnly = true;
+        nameInput.placeholder = 'Название подтянется с RA автоматически';
+        const nameRefresh = document.createElement('button');
+        nameRefresh.className = 'refresh-name';
+        nameRefresh.textContent = '🔄 Обновить с RA';
+        nameRefresh.addEventListener('click', function () {
+            nameRefresh.disabled = true;
+            nameRefresh.textContent = '⏳ Загрузка...';
+            fetchGameInfo(r.id)
+                .then(function (info) {
+                    nameInput.value = info.full;
+                    toast('Название обновлено с RA: ' + info.full);
+                })
+                .catch(function (err) {
+                    toast('Не удалось получить название: ' + err.message, 'err');
+                })
+                .then(function () {
+                    nameRefresh.disabled = false;
+                    nameRefresh.textContent = '🔄 Обновить с RA';
+                });
+        });
         nameRow.appendChild(nameLabel);
         nameRow.appendChild(nameInput);
+        nameRow.appendChild(nameRefresh);
         detailsBox.appendChild(nameRow);
 
         const driveRow = document.createElement('div');
@@ -1071,14 +1126,32 @@
                     toast('Откройте страницу игры на RetroAchievements, чтобы добавить её', 'err');
                     return;
                 }
-                if (!GAME_ID_TO_URL[currentId]) {
-                    GAME_ID_TO_URL[currentId] = {};
-                }
+                const already = !!GAME_ID_TO_URL[currentId];
+                if (!GAME_ID_TO_URL[currentId]) GAME_ID_TO_URL[currentId] = {};
                 selectedGameId = currentId;
                 isEditing = true;
                 rebuildConsoleOptions();
                 renderTable();
                 renderDetails();
+
+                if (!already || !GAME_ID_TO_URL[currentId].name) {
+                    toast('Загрузка названия с RA...', 'info');
+                    fetchGameInfo(currentId)
+                        .then(function (info) {
+                            if (!GAME_ID_TO_URL[currentId]) GAME_ID_TO_URL[currentId] = {};
+                            GAME_ID_TO_URL[currentId].name = info.full;
+                            saveData(GAME_ID_TO_URL);
+                            toast('Название получено: ' + info.full);
+                            if (selectedGameId === currentId && isEditing) {
+                                renderDetails();
+                            }
+                            rebuildConsoleOptions();
+                            renderTable();
+                        })
+                        .catch(function (err) {
+                            toast('Не удалось получить название с RA: ' + err.message, 'err');
+                        });
+                }
             } else if (act === 'save-local') {
                 saveData(GAME_ID_TO_URL);
                 toast('Сохранено локально');
