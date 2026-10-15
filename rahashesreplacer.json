@@ -949,8 +949,8 @@
     "name": "Devil May Cry 2 (PlayStation 2)"
   },
   "7786": {
-    "ru": "https://disk.yandex.ru/d/aZ5Tzj5nueip4A",
-    "name": "Dead or Alive (Saturn)"
+    "name": "Dead or Alive (Saturn)",
+    "ru": "https://disk.yandex.ru/d/WaLlp0eQONJXVQ"
   },
   "7788": {
     "ru": "https://disk.yandex.ru/d/oBP2LBulMKGxgA",
@@ -961,6 +961,12 @@
   "7858": {
     "ru": "https://disk.yandex.ru/d/zTVSc8NhV8zTMQ",
     "name": "Sonic Colors (Wii)"
+  },
+  "8307": {
+    "name": "Deep Fear (Saturn)",
+    "ru": "https://disk.yandex.ru/d/-Ufq5T3a3YeLeQ",
+    "status": "mastering",
+    "comment": "Протестировал: [user=SiriusIndigo]"
   },
   "8548": {
     "ru": "https://disk.yandex.ru/d/Qjuy_TNnxrAr7Q",
@@ -1123,18 +1129,18 @@
     "name": "Tomb Raider: Anniversary (PlayStation Portable)"
   },
   "14541": {
-    "ru": "https://disk.yandex.ru/d/24Ig6Rbd-OcsWg",
-    "comment": "Большая часть текст переведена через ИИ + ручная редактура.\nПеревод на этапе тестирования, но из-за длинных боёв в игре тестирование идёт очень медленно. \n(Переведен только первый сценарий)",
-    "name": "Shining Force III (Saturn)"
+    "name": "Shining Force III (Saturn)",
+    "ru": "https://disk.yandex.ru/d/olRrEO6W2rqe8A",
+    "comment": "Большая часть текст переведена через ИИ + ручная редактура.\nПеревод на этапе тестирования, но из-за длинных боёв в игре тестирование идёт очень медленно. \n(Переведен только первый сценарий)"
   },
   "14571": {
-    "ru": "https://disk.yandex.ru/d/-BOCGfBGpha_rQ",
-    "comment": "Только озвучка.\nСлучайно обнаружил: [user=AULGGUS]",
-    "name": "Radiant Silvergun (Saturn)"
+    "name": "Radiant Silvergun (Saturn)",
+    "ru": "https://disk.yandex.ru/d/g7m4i6R02rnCmA",
+    "comment": "Только озвучка.\nСлучайно обнаружил: [user=AULGGUS]"
   },
   "14643": {
-    "ru": "https://disk.yandex.ru/d/x4vFLsb6SpDOLA",
-    "name": "Linkle Liver Story (Saturn)"
+    "name": "Linkle Liver Story (Saturn)",
+    "ru": "https://disk.yandex.ru/d/NBIRm1ncfMUS5w"
   },
   "14662": {
     "ru": "https://disk.yandex.ru/d/WAIiP_sK6sKaLw",
@@ -1566,8 +1572,10 @@
     "name": "Tomb Raider: Legend (PlayStation Portable)"
   },
   "19710": {
+    "name": "Shoujo Kakumei Utena: Itsuka Kakumei Sareru Monogatari (Saturn)",
     "ru": "https://disk.yandex.ru/d/rcWgF5kE2Cbg-g",
-    "name": "Shoujo Kakumei Utena: Itsuka Kakumei Sareru Monogatari (Saturn)"
+    "status": "beaten",
+    "comment": "Протестировал: [user=AULGGUS]\n24 ачивки добиваем на оригинале"
   },
   "19733": {
     "ru": "https://disk.yandex.ru/d/k6vWG-T90tObyw",
@@ -2025,8 +2033,8 @@
     "name": "Syberia II (PlayStation 2)"
   },
   "22174": {
-    "ru": "https://disk.yandex.ru/d/oXHIoXkWiLQ6cQ",
-    "name": "Tactics Ogre: Let Us Cling Together (Saturn)"
+    "name": "Tactics Ogre: Let Us Cling Together (Saturn)",
+    "ru": "https://disk.yandex.ru/d/dA7sw0J5N81vaQ"
   },
   "22177": {
     "ru": "https://disk.yandex.ru/d/_4r9Jt82hLONJQ",
