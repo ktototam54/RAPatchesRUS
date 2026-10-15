@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      8.3
-// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных с редактированием.
+// @version      8.7
+// @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных.
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -20,10 +20,8 @@
 
     const REMOTE_PUBLIC_URL = 'https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.json';
     const STORAGE_KEY = 'ra_hashes_replacer_data';
-    const TIME_KEY = 'ra_hashes_replacer_last_fetch';
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
-    const DATA_FRESH_MS = 60 * 60 * 1000;
 
     const STATUS_META = {
         mastering:     { text: 'Мастеринг',         color: '#f4a900', bg: 'rgba(244,169,0,0.15)',   border: '#f4a900' },
@@ -40,15 +38,11 @@
 
     let GAME_ID_TO_URL = {};
     let dataLoaded = false;
-    let dataLoading = false;
-    let lastFetchTime = 0;
-    let hasChanges = false;
-    let wasFresh = false;
     let selectedGameId = null;
+    let isEditing = false;
     let sortColumn = 'id';
     let sortAsc = true;
 
-    // ---- Фильтры ----
     let filterText = '';
     let filterConsole = '';
     let filterStatus = '';
@@ -77,38 +71,50 @@
         });
     }
 
+    let toastEl = null;
+    let toastTimer = null;
+
+    function toast(msg, type) {
+        if (!toastEl) {
+            toastEl = document.createElement('div');
+            toastEl.id = 'raru-toast';
+            document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.className = '';
+        if (type === 'err') toastEl.classList.add('err');
+        else if (type === 'info') toastEl.classList.add('info');
+        requestAnimationFrame(function () { toastEl.classList.add('show'); });
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+            toastEl.classList.remove('show');
+        }, 3000);
+    }
+
     function fetchRemoteData() {
-        dataLoading = true;
-        updateStatus();
+        toast('Загрузка данных...', 'info');
         return gmFetch(REMOTE_PUBLIC_URL)
             .then(function (text) {
                 let parsed;
                 try { parsed = JSON.parse(text); }
-                catch (e) { throw new Error('Файл не является JSON'); }
+                catch (e) { throw new Error('файл с GitHub не является корректным JSON'); }
                 if (typeof parsed !== 'object' || Array.isArray(parsed)) {
-                    throw new Error('Ожидается объект { "id": { drive, ru, status, comment, name } }');
+                    throw new Error('ожидался объект вида { "<gameId>": { ... } }');
                 }
                 GAME_ID_TO_URL = parsed;
                 dataLoaded = true;
-                lastFetchTime = Date.now();
-                hasChanges = false;
-                wasFresh = true;
-                GM_setValue(TIME_KEY, lastFetchTime);
                 GM_setValue(STORAGE_KEY, JSON.stringify(parsed));
                 refreshAll();
                 rebuildConsoleOptions();
                 renderTable();
-                updateStatus();
+                renderDetails();
+                const count = Object.keys(parsed).length;
+                toast('Данные получены: ' + count + ' записей');
             })
             .catch(function (err) {
-                dataLoading = false;
-                updateStatus('Ошибка: ' + err.message, true);
+                toast('Ошибка: ' + err.message, 'err');
                 throw err;
             });
-    }
-
-    function isDataFresh() {
-        return lastFetchTime > 0 && (Date.now() - lastFetchTime) < DATA_FRESH_MS;
     }
 
     function parseName(fullName) {
@@ -118,7 +124,6 @@
         return { name: fullName, console: '' };
     }
 
-    // ---------- Вставка блоков в страницу RA ----------
     function findTextNode(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         let node;
@@ -414,15 +419,13 @@
         '.ra-game-comment .ra-ach-card:hover { background: rgba(74,144,217,0.2); text-decoration: none; }',
         '.ra-game-comment .ra-ach-card::before { content: "🏆"; font-size: 13px; }',
 
-        '#raru-panel { position: fixed; right: 20px; bottom: 20px; width: 1180px; max-width: 96vw; height: 760px; max-height: 92vh; background: #23272a; color: #dcddde; border: 1px solid #40444b; border-radius: 8px; z-index: 999999; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }',
+        '#raru-panel { position: fixed; right: 20px; bottom: 20px; width: 1180px; max-width: 96vw; height: 96vh; max-height: 96vh; background: #23272a; color: #dcddde; border: 1px solid #40444b; border-radius: 8px; z-index: 999999; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); overflow: hidden; }',
         '#raru-panel.hidden { display: none; }',
-        '#raru-panel .db-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #2c2f33; border-bottom: 1px solid #40444b; border-radius: 8px 8px 0 0; }',
+        '#raru-panel .db-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #2c2f33; border-bottom: 1px solid #40444b; border-radius: 8px 8px 0 0; flex: 0 0 auto; }',
         '#raru-panel .db-title { font-weight: 600; color: #f4a900; font-size: 14px; display: flex; align-items: center; gap: 8px; }',
         '#raru-panel .db-title::before { content: "🗃"; }',
-        '#raru-panel .db-header .db-status { color: #999; font-size: 12px; }',
-        '#raru-panel .db-header .db-status.err { color: #d97a7a; }',
 
-        '#raru-panel .db-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #40444b; background: #23272a; }',
+        '#raru-panel .db-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #40444b; background: #23272a; flex: 0 0 auto; }',
         '#raru-panel .db-toolbar button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; }',
         '#raru-panel .db-toolbar button:hover { background: #4f545c; }',
         '#raru-panel .db-toolbar button.primary { background: #2b6cb0; border-color: #3182ce; color: #fff; font-weight: 600; }',
@@ -438,7 +441,7 @@
         '#raru-panel .db-toolbar label.chk input { accent-color: #f4a900; margin: 0; }',
         '#raru-panel .db-toolbar .counter { color: #888; font-size: 12px; margin-left: auto; white-space: nowrap; }',
 
-        '#raru-panel .db-table-wrap { flex: 1; overflow: auto; background: #23272a; }',
+        '#raru-panel .db-table-wrap { flex: 1 1 auto; min-height: 200px; overflow: auto; background: #23272a; }',
         '#raru-panel table.db-table { width: 100%; border-collapse: collapse; font-size: 13px; }',
         '#raru-panel table.db-table thead th { position: sticky; top: 0; background: #2c2f33; color: #b9bbbe; padding: 8px 10px; text-align: left; border-bottom: 1px solid #40444b; cursor: pointer; user-select: none; font-weight: 600; font-size: 12px; z-index: 2; }',
         '#raru-panel table.db-table thead th:hover { color: #f4a900; }',
@@ -447,6 +450,7 @@
         '#raru-panel table.db-table tbody tr { border-bottom: 1px solid #2c2f33; cursor: pointer; }',
         '#raru-panel table.db-table tbody tr:nth-child(even) { background: #262a2d; }',
         '#raru-panel table.db-table tbody tr:hover { background: #32363a; }',
+        '#raru-panel table.db-table tbody tr.current-page { background: rgba(244,169,0,0.12); border-left: 3px solid #f4a900; }',
         '#raru-panel table.db-table tbody tr.selected { background: #2b6cb0; }',
         '#raru-panel table.db-table tbody tr.selected td { color: #fff; }',
         '#raru-panel table.db-table tbody td { padding: 6px 10px; vertical-align: top; color: #dcddde; }',
@@ -462,10 +466,10 @@
         '#raru-panel .link-pill.comment { background: rgba(246,224,94,0.2); color: #f6e05e; }',
         '#raru-panel .no-rows { padding: 20px; text-align: center; color: #888; font-style: italic; }',
 
-        '#raru-panel .db-details { border-top: 1px solid #40444b; background: #2c2f33; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-height: 130px; max-height: 200px; border-radius: 0 0 8px 8px; }',
+        '#raru-panel .db-details { border-top: 1px solid #40444b; background: #2c2f33; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; min-height: 140px; max-height: 45vh; overflow-y: auto; border-radius: 0 0 8px 8px; }',
         '#raru-panel .db-details .detail-title { color: #f4a900; font-weight: 600; font-size: 14px; }',
-        '#raru-panel .db-details .detail-comment { font-size: 12px; color: #b9bbbe; white-space: pre-wrap; overflow-y: auto; flex: 1; max-height: 80px; }',
-        '#raru-panel .db-details .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }',
+        '#raru-panel .db-details .detail-comment { font-size: 12px; color: #b9bbbe; white-space: pre-wrap; overflow-y: auto; max-height: 100px; }',
+        '#raru-panel .db-details .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 6px; }',
         '#raru-panel .db-details .detail-actions button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 12px; font-weight: 600; }',
         '#raru-panel .db-details .detail-actions button:hover { background: #4f545c; }',
         '#raru-panel .db-details .detail-actions button.drive { background: #2b6cb0; border-color: #3182ce; color: #fff; }',
@@ -474,44 +478,39 @@
         '#raru-panel .db-details .detail-actions button.ru:hover { background: #38a169; }',
         '#raru-panel .db-details .detail-actions button.edit { background: #6b4f1c; border-color: #8a6a2a; color: #fff; }',
         '#raru-panel .db-details .detail-actions button.edit:hover { background: #8a6a2a; }',
+        '#raru-panel .db-details .detail-actions button.primary { background: #2b6cb0; border-color: #3182ce; color: #fff; }',
+        '#raru-panel .db-details .detail-actions button.danger { background: #6b2a2a; border-color: #8a3a3a; color: #fff; }',
+        '#raru-panel .db-details .detail-actions button.danger:hover { background: #8a3a3a; }',
         '#raru-panel .db-details .detail-actions button:disabled { opacity: 0.4; cursor: not-allowed; }',
 
-        // ---- Модальное окно редактирования ----
-        '#raru-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000000; display: flex; align-items: center; justify-content: center; }',
-        '#raru-modal-overlay.hidden { display: none; }',
-        '#raru-modal { background: #2c2f33; color: #dcddde; border: 1px solid #40444b; border-radius: 8px; width: 640px; max-width: 95vw; max-height: 90vh; overflow-y: auto; padding: 16px 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; box-shadow: 0 12px 48px rgba(0,0,0,0.8); }',
-        '#raru-modal h2 { margin: 0 0 12px; font-size: 16px; color: #f4a900; }',
-        '#raru-modal .field { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }',
-        '#raru-modal .field label { font-size: 12px; color: #b9bbbe; }',
-        '#raru-modal input[type="text"], #raru-modal select, #raru-modal textarea { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 6px 8px; font-size: 13px; font-family: inherit; width: 100%; box-sizing: border-box; }',
-        '#raru-modal textarea { min-height: 70px; resize: vertical; }',
-        '#raru-modal input:focus, #raru-modal select:focus, #raru-modal textarea:focus { outline: none; border-color: #f4a900; }',
-        '#raru-modal input[disabled] { opacity: 0.6; cursor: not-allowed; }',
-        '#raru-modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }',
-        '#raru-modal .actions button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }',
-        '#raru-modal .actions button:hover { background: #4f545c; }',
-        '#raru-modal .actions button.primary { background: #2b6cb0; border-color: #3182ce; color: #fff; }',
-        '#raru-modal .actions button.primary:hover { background: #3182ce; }',
-        '#raru-modal .actions button.danger { background: #6b2a2a; border-color: #8a3a3a; color: #fff; }',
-        '#raru-modal .actions button.danger:hover { background: #8a3a3a; }'
+        '#raru-panel .edit-row { display: flex; gap: 8px; align-items: center; }',
+        '#raru-panel .edit-row label { color: #b9bbbe; font-size: 12px; min-width: 130px; }',
+        '#raru-panel .edit-row input, #raru-panel .edit-row select, #raru-panel .edit-row textarea { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; font-family: inherit; flex: 1; box-sizing: border-box; }',
+        '#raru-panel .edit-row textarea { min-height: 55px; resize: vertical; }',
+        '#raru-panel .edit-row input:focus, #raru-panel .edit-row select:focus, #raru-panel .edit-row textarea:focus { outline: none; border-color: #f4a900; }',
+        '#raru-panel .edit-header { font-size: 12px; color: #f4a900; font-weight: 600; margin-bottom: 4px; }',
+
+        // Тосты — правый нижний угол
+        '#raru-toast { position: fixed; right: 20px; bottom: 20px; background: #2e7d32; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 13px; z-index: 1000001; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; pointer-events: none; max-width: 400px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }',
+        '#raru-toast.show { opacity: 1; transform: translateY(0); }',
+        '#raru-toast.err { background: #c62828; }',
+        '#raru-toast.info { background: #2b6cb0; }'
     ].join('\n');
 
     const styleEl = document.createElement('style');
     styleEl.textContent = CSS;
     (document.head || document.documentElement).appendChild(styleEl);
 
-    // ---------- Панель ----------
     const panel = document.createElement('div');
     panel.id = 'raru-panel';
     panel.className = 'hidden';
     panel.innerHTML =
         '<div class="db-header">' +
-            '<div class="db-title">RA RU ROM Database</div>' +
-            '<div class="db-status" id="raru-db-status">—</div>' +
+            '<div class="db-title">База Данных RA RU ROM</div>' +
         '</div>' +
         '<div class="db-toolbar">' +
             '<button class="primary" data-act="fetch-remote">Обновить данные</button>' +
-            '<button class="success" data-act="add-new">+ Новая игра</button>' +
+            '<button class="success" data-act="add-current">+ Текущая игра</button>' +
             '<button class="success" data-act="save-local">Сохранить</button>' +
             '<button data-act="export">Экспорт в файл</button>' +
             '<input type="text" id="raru-search" placeholder="Поиск..." />' +
@@ -533,7 +532,7 @@
             '<table class="db-table">' +
                 '<thead>' +
                     '<tr>' +
-                        '<th data-sort="id">Game ID</th>' +
+                        '<th data-sort="id">Идентификатор игры</th>' +
                         '<th data-sort="console">Консоль</th>' +
                         '<th data-sort="name">Название игры</th>' +
                         '<th data-sort="status">Статус</th>' +
@@ -549,43 +548,13 @@
             '<div class="detail-actions" id="raru-detail-actions"></div>' +
         '</div>';
 
-    // ---------- Модальное окно редактирования ----------
-    const modalOverlay = document.createElement('div');
-    modalOverlay.id = 'raru-modal-overlay';
-    modalOverlay.className = 'hidden';
-    modalOverlay.innerHTML =
-        '<div id="raru-modal">' +
-            '<h2 id="raru-modal-title">Редактирование</h2>' +
-            '<div class="field"><label>Game ID</label><input type="text" id="raru-edit-id" placeholder="например 2606" /></div>' +
-            '<div class="field"><label>Название игры (с консолью в скобках, например: Resident Evil 4 (PlayStation 2))</label><input type="text" id="raru-edit-name" placeholder="Resident Evil 4 (PlayStation 2)" /></div>' +
-            '<div class="field"><label>Drive (Google Drive ссылка)</label><input type="text" id="raru-edit-drive" placeholder="https://drive.google.com/..." /></div>' +
-            '<div class="field"><label>Русская версия (ссылка)</label><input type="text" id="raru-edit-ru" placeholder="https://disk.yandex.ru/..." /></div>' +
-            '<div class="field"><label>Статус</label><select id="raru-edit-status"></select></div>' +
-            '<div class="field"><label>Комментарий</label><textarea id="raru-edit-comment" placeholder="Поддерживаются ссылки: [ach=ID], [game=ID], [user=ИМЯ]"></textarea></div>' +
-            '<div class="actions">' +
-                '<button class="danger" id="raru-edit-delete">Удалить</button>' +
-                '<button id="raru-edit-cancel">Отмена</button>' +
-                '<button class="primary" id="raru-edit-save">Сохранить</button>' +
-            '</div>' +
-        '</div>';
-
-    // Заполняем селект статусов
-    const editStatusSelect = modalOverlay.querySelector('#raru-edit-status');
-    STATUS_OPTIONS.forEach(function (o) {
-        const opt = document.createElement('option');
-        opt.value = o.value;
-        opt.textContent = o.label;
-        editStatusSelect.appendChild(opt);
-    });
-
     function mountUI() {
         if (!document.body) return setTimeout(mountUI, 50);
         document.body.appendChild(panel);
-        document.body.appendChild(modalOverlay);
         bindUI();
         rebuildConsoleOptions();
         renderTable();
-        updateStatus();
+        renderDetails();
     }
 
     const tbody = panel.querySelector('#raru-tbody');
@@ -595,136 +564,8 @@
     const filterDriveChk = panel.querySelector('#raru-filter-drive');
     const filterRuChk = panel.querySelector('#raru-filter-ru');
     const filterCommentChk = panel.querySelector('#raru-filter-comment');
-    const dbStatus = panel.querySelector('#raru-db-status');
     const counter = panel.querySelector('#raru-counter');
-    const detailTitle = panel.querySelector('#raru-detail-title');
-    const detailComment = panel.querySelector('#raru-detail-comment');
-    const detailActions = panel.querySelector('#raru-detail-actions');
-
-    // ---------- Модалка ----------
-    const modalTitle = modalOverlay.querySelector('#raru-modal-title');
-    const editIdInput = modalOverlay.querySelector('#raru-edit-id');
-    const editNameInput = modalOverlay.querySelector('#raru-edit-name');
-    const editDriveInput = modalOverlay.querySelector('#raru-edit-drive');
-    const editRuInput = modalOverlay.querySelector('#raru-edit-ru');
-    const editCommentInput = modalOverlay.querySelector('#raru-edit-comment');
-    const editDeleteBtn = modalOverlay.querySelector('#raru-edit-delete');
-    const editCancelBtn = modalOverlay.querySelector('#raru-edit-cancel');
-    const editSaveBtn = modalOverlay.querySelector('#raru-edit-save');
-
-    let editingIsNew = false;
-
-    function openEditModal(gameId) {
-        editingIsNew = false;
-        const entry = GAME_ID_TO_URL[gameId] || {};
-        modalTitle.textContent = 'Редактирование игры #' + gameId;
-        editIdInput.value = gameId;
-        editIdInput.disabled = true;
-        editNameInput.value = entry.name || '';
-        editDriveInput.value = entry.drive || '';
-        editRuInput.value = entry.ru || '';
-        editStatusSelect.value = entry.status || '';
-        editCommentInput.value = entry.comment || '';
-        editDeleteBtn.style.display = '';
-        modalOverlay.classList.remove('hidden');
-        editNameInput.focus();
-    }
-
-    function openNewModal() {
-        editingIsNew = true;
-        modalTitle.textContent = 'Новая игра';
-        editIdInput.value = '';
-        editIdInput.disabled = false;
-        editNameInput.value = '';
-        editDriveInput.value = '';
-        editRuInput.value = '';
-        editStatusSelect.value = '';
-        editCommentInput.value = '';
-        editDeleteBtn.style.display = 'none';
-        modalOverlay.classList.remove('hidden');
-        editIdInput.focus();
-    }
-
-    function closeModal() {
-        modalOverlay.classList.add('hidden');
-    }
-
-    function saveFromModal() {
-        const id = editIdInput.value.trim();
-        if (!id || !/^\d+$/.test(id)) {
-            alert('Game ID должен быть числом');
-            return;
-        }
-        const obj = {};
-        const nameVal = editNameInput.value.trim();
-        const driveVal = editDriveInput.value.trim();
-        const ruVal = editRuInput.value.trim();
-        const statusVal = editStatusSelect.value;
-        const commentVal = editCommentInput.value.trim();
-
-        if (nameVal) obj.name = nameVal;
-        if (driveVal) obj.drive = driveVal;
-        if (ruVal) obj.ru = ruVal;
-        if (statusVal) obj.status = statusVal;
-        if (commentVal) obj.comment = commentVal;
-
-        GAME_ID_TO_URL[id] = obj;
-        hasChanges = true;
-        saveData(GAME_ID_TO_URL);
-        closeModal();
-        rebuildConsoleOptions();
-        renderTable();
-        renderDetails();
-        refreshAll();
-    }
-
-    function deleteFromModal() {
-        const id = editIdInput.value.trim();
-        if (!id) return;
-        if (!confirm('Удалить игру #' + id + '?')) return;
-        delete GAME_ID_TO_URL[id];
-        hasChanges = true;
-        saveData(GAME_ID_TO_URL);
-        closeModal();
-        rebuildConsoleOptions();
-        renderTable();
-        renderDetails();
-        refreshAll();
-    }
-
-    editSaveBtn.addEventListener('click', saveFromModal);
-    editCancelBtn.addEventListener('click', closeModal);
-    editDeleteBtn.addEventListener('click', deleteFromModal);
-    modalOverlay.addEventListener('click', function (e) {
-        if (e.target === modalOverlay) closeModal();
-    });
-
-    function updateStatus(errMsg, isErr) {
-        if (errMsg) {
-            dbStatus.textContent = errMsg;
-            dbStatus.className = 'db-status err';
-            return;
-        }
-        if (dataLoading) {
-            dbStatus.textContent = 'Загрузка...';
-            dbStatus.className = 'db-status';
-            return;
-        }
-        if (!lastFetchTime) {
-            dbStatus.textContent = 'Данные не загружены';
-            dbStatus.className = 'db-status err';
-            return;
-        }
-        const msLeft = Math.max(0, DATA_FRESH_MS - (Date.now() - lastFetchTime));
-        const total = Math.floor(msLeft / 1000);
-        const mm = Math.floor(total / 60);
-        const ss = total % 60;
-        const t = new Date(lastFetchTime);
-        const pad = function (n) { return String(n).padStart(2, '0'); };
-        dbStatus.textContent = 'Обновлено: ' + pad(t.getHours()) + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds()) +
-            ' · до устаревания ' + pad(mm) + ':' + pad(ss);
-        dbStatus.className = 'db-status';
-    }
+    const detailsBox = panel.querySelector('#raru-details');
 
     function getRows() {
         const rows = [];
@@ -787,8 +628,23 @@
     }
 
     function sortRows(rows) {
+        const currentId = getCurrentGameId();
+
+        rows.sort(function (a, b) {
+            const aIsCurrent = currentId && a.id === currentId;
+            const bIsCurrent = currentId && b.id === currentId;
+            if (aIsCurrent && !bIsCurrent) return -1;
+            if (bIsCurrent && !aIsCurrent) return 1;
+            return 0;
+        });
+
         const dir = sortAsc ? 1 : -1;
         rows.sort(function (a, b) {
+            const currentId = getCurrentGameId();
+            const aIsCurrent = currentId && a.id === currentId;
+            const bIsCurrent = currentId && b.id === currentId;
+            if (aIsCurrent !== bIsCurrent) return 0;
+
             let va, vb;
             switch (sortColumn) {
                 case 'console': va = a.console.toLowerCase(); vb = b.console.toLowerCase(); break;
@@ -801,6 +657,7 @@
             if (va > vb) return 1 * dir;
             return 0;
         });
+
         return rows;
     }
 
@@ -833,6 +690,7 @@
         const allRows = getRows();
         const filtered = applyFilters(allRows);
         const rows = sortRows(filtered);
+        const currentId = getCurrentGameId();
 
         counter.textContent = 'Найдено: ' + rows.length + ' из ' + allRows.length;
 
@@ -851,6 +709,7 @@
         rows.forEach(function (r) {
             const tr = document.createElement('tr');
             if (r.id === selectedGameId) tr.classList.add('selected');
+            if (currentId && r.id === currentId) tr.classList.add('current-page');
             tr.dataset.id = r.id;
 
             const tdId = document.createElement('td');
@@ -913,13 +772,13 @@
             tr.appendChild(tdLinks);
 
             tr.addEventListener('click', function () {
+                if (isEditing) {
+                    if (!confirm('Есть несохранённые правки. Переключиться на другую игру?')) return;
+                }
                 selectedGameId = r.id;
+                isEditing = false;
                 renderTable();
                 renderDetails();
-            });
-
-            tr.addEventListener('dblclick', function () {
-                openEditModal(r.id);
             });
 
             tbody.appendChild(tr);
@@ -927,17 +786,38 @@
     }
 
     function renderDetails() {
-        detailActions.innerHTML = '';
+        detailsBox.innerHTML = '';
         if (!selectedGameId || !GAME_ID_TO_URL[selectedGameId]) {
-            detailTitle.textContent = 'Выберите игру в списке';
-            detailComment.textContent = '';
+            const title = document.createElement('div');
+            title.className = 'detail-title';
+            title.textContent = 'Выберите игру в списке';
+            detailsBox.appendChild(title);
             return;
         }
+
         const r = getRows().find(function (x) { return x.id === selectedGameId; });
         if (!r) return;
 
-        detailTitle.textContent = '[' + r.id + '] ' + r.name + (r.console && r.console !== '—' ? ' (' + r.console + ')' : '');
-        detailComment.textContent = r.comment || '';
+        if (isEditing) {
+            renderEditInline(r);
+        } else {
+            renderViewInline(r);
+        }
+    }
+
+    function renderViewInline(r) {
+        const title = document.createElement('div');
+        title.className = 'detail-title';
+        title.textContent = '[' + r.id + '] ' + r.name + (r.console && r.console !== '—' ? ' (' + r.console + ')' : '');
+        detailsBox.appendChild(title);
+
+        const comment = document.createElement('div');
+        comment.className = 'detail-comment';
+        comment.textContent = r.comment || '(комментария нет)';
+        detailsBox.appendChild(comment);
+
+        const actions = document.createElement('div');
+        actions.className = 'detail-actions';
 
         const btnDrive = document.createElement('button');
         btnDrive.className = 'drive';
@@ -948,7 +828,7 @@
                 window.open(r.drive, '_blank', 'noopener,noreferrer');
             });
         }
-        detailActions.appendChild(btnDrive);
+        actions.appendChild(btnDrive);
 
         const btnRu = document.createElement('button');
         btnRu.className = 'ru';
@@ -959,22 +839,155 @@
                 window.open(r.ru, '_blank', 'noopener,noreferrer');
             });
         }
-        detailActions.appendChild(btnRu);
+        actions.appendChild(btnRu);
 
         const btnEdit = document.createElement('button');
         btnEdit.className = 'edit';
         btnEdit.textContent = '✎ Редактировать';
         btnEdit.addEventListener('click', function () {
-            openEditModal(r.id);
+            isEditing = true;
+            renderDetails();
         });
-        detailActions.appendChild(btnEdit);
+        actions.appendChild(btnEdit);
 
         const btnRa = document.createElement('button');
         btnRa.textContent = '🔗 Страница на RA';
         btnRa.addEventListener('click', function () {
             window.open('https://retroachievements.org/game/' + r.id, '_blank', 'noopener,noreferrer');
         });
-        detailActions.appendChild(btnRa);
+        actions.appendChild(btnRa);
+
+        detailsBox.appendChild(actions);
+    }
+
+    function renderEditInline(r) {
+        const header = document.createElement('div');
+        header.className = 'edit-header';
+        header.textContent = 'Редактирование игры #' + r.id;
+        detailsBox.appendChild(header);
+
+        const entry = GAME_ID_TO_URL[r.id] || {};
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'edit-row';
+        const nameLabel = document.createElement('label');
+        nameLabel.textContent = 'Название игры:';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = entry.name || '';
+        nameInput.placeholder = 'Resident Evil 4 (PlayStation 2)';
+        nameRow.appendChild(nameLabel);
+        nameRow.appendChild(nameInput);
+        detailsBox.appendChild(nameRow);
+
+        const driveRow = document.createElement('div');
+        driveRow.className = 'edit-row';
+        const driveLabel = document.createElement('label');
+        driveLabel.textContent = 'Диск:';
+        const driveInput = document.createElement('input');
+        driveInput.type = 'text';
+        driveInput.value = entry.drive || '';
+        driveInput.placeholder = 'https://drive.google.com/...';
+        driveRow.appendChild(driveLabel);
+        driveRow.appendChild(driveInput);
+        detailsBox.appendChild(driveRow);
+
+        const ruRow = document.createElement('div');
+        ruRow.className = 'edit-row';
+        const ruLabel = document.createElement('label');
+        ruLabel.textContent = 'Русская версия:';
+        const ruInput = document.createElement('input');
+        ruInput.type = 'text';
+        ruInput.value = entry.ru || '';
+        ruInput.placeholder = 'https://disk.yandex.ru/...';
+        ruRow.appendChild(ruLabel);
+        ruRow.appendChild(ruInput);
+        detailsBox.appendChild(ruRow);
+
+        const statusRow = document.createElement('div');
+        statusRow.className = 'edit-row';
+        const statusLabel = document.createElement('label');
+        statusLabel.textContent = 'Статус:';
+        const statusSelect = document.createElement('select');
+        STATUS_OPTIONS.forEach(function (o) {
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.label;
+            statusSelect.appendChild(opt);
+        });
+        statusSelect.value = entry.status || '';
+        statusRow.appendChild(statusLabel);
+        statusRow.appendChild(statusSelect);
+        detailsBox.appendChild(statusRow);
+
+        const commentRow = document.createElement('div');
+        commentRow.className = 'edit-row';
+        const commentLabel = document.createElement('label');
+        commentLabel.textContent = 'Комментарий:';
+        const commentInput = document.createElement('textarea');
+        commentInput.value = entry.comment || '';
+        commentInput.placeholder = 'Поддерживаются ссылки: [ach=ID], [game=ID], [user=ИМЯ]';
+        commentRow.appendChild(commentLabel);
+        commentRow.appendChild(commentInput);
+        detailsBox.appendChild(commentRow);
+
+        const actions = document.createElement('div');
+        actions.className = 'detail-actions';
+
+        const btnSave = document.createElement('button');
+        btnSave.className = 'primary';
+        btnSave.textContent = '✓ Сохранить';
+        btnSave.addEventListener('click', function () {
+            const obj = {};
+            const nameVal = nameInput.value.trim();
+            const driveVal = driveInput.value.trim();
+            const ruVal = ruInput.value.trim();
+            const statusVal = statusSelect.value;
+            const commentVal = commentInput.value.trim();
+            if (nameVal) obj.name = nameVal;
+            if (driveVal) obj.drive = driveVal;
+            if (ruVal) obj.ru = ruVal;
+            if (statusVal) obj.status = statusVal;
+            if (commentVal) obj.comment = commentVal;
+            if (Object.keys(obj).length === 0) {
+                delete GAME_ID_TO_URL[r.id];
+            } else {
+                GAME_ID_TO_URL[r.id] = obj;
+            }
+            saveData(GAME_ID_TO_URL);
+            isEditing = false;
+            rebuildConsoleOptions();
+            renderTable();
+            renderDetails();
+            refreshAll();
+        });
+        actions.appendChild(btnSave);
+
+        const btnCancel = document.createElement('button');
+        btnCancel.textContent = '✕ Отмена';
+        btnCancel.addEventListener('click', function () {
+            isEditing = false;
+            renderDetails();
+        });
+        actions.appendChild(btnCancel);
+
+        const btnDelete = document.createElement('button');
+        btnDelete.className = 'danger';
+        btnDelete.textContent = '🗑 Удалить';
+        btnDelete.addEventListener('click', function () {
+            if (!confirm('Удалить игру #' + r.id + '?')) return;
+            delete GAME_ID_TO_URL[r.id];
+            saveData(GAME_ID_TO_URL);
+            selectedGameId = null;
+            isEditing = false;
+            rebuildConsoleOptions();
+            renderTable();
+            renderDetails();
+            refreshAll();
+        });
+        actions.appendChild(btnDelete);
+
+        detailsBox.appendChild(actions);
     }
 
     function clearFilters() {
@@ -1049,20 +1062,29 @@
             const act = btn.dataset.act;
 
             if (act === 'fetch-remote') {
-                if (!confirm('Загрузить свежие данные с GitHub? Несохранённые правки будут потеряны.')) return;
                 fetchRemoteData()
-                    .then(function () { renderTable(); })
-                    .catch(function (err) {
-                        console.error('[RA Replacer] fetch error:', err);
-                    });
-            } else if (act === 'add-new') {
-                openNewModal();
+                    .then(function () { renderTable(); renderDetails(); })
+                    .catch(function () {});
+            } else if (act === 'add-current') {
+                const currentId = getCurrentGameId();
+                if (!currentId) {
+                    toast('Откройте страницу игры на RetroAchievements, чтобы добавить её', 'err');
+                    return;
+                }
+                if (!GAME_ID_TO_URL[currentId]) {
+                    GAME_ID_TO_URL[currentId] = {};
+                }
+                selectedGameId = currentId;
+                isEditing = true;
+                rebuildConsoleOptions();
+                renderTable();
+                renderDetails();
             } else if (act === 'save-local') {
                 saveData(GAME_ID_TO_URL);
-                hasChanges = true;
-                alert('Сохранено локально. Не забудь нажать «Экспорт в файл» и залить JSON в репозиторий GitHub.');
+                toast('Сохранено локально');
             } else if (act === 'export') {
                 exportToFile();
+                toast('Файл rahashesreplacer.json сохранён');
             } else if (act === 'clear-filters') {
                 clearFilters();
             }
@@ -1091,11 +1113,7 @@
                 rebuildConsoleOptions();
                 renderTable();
                 renderDetails();
-                updateStatus();
             }
-        }
-        if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
-            closeModal();
         }
     }, true);
 
@@ -1113,13 +1131,7 @@
         dataItem.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            fetchRemoteData()
-                .then(function () {
-                    alert('Данные получены: ' + Object.keys(GAME_ID_TO_URL).length + ' записей');
-                })
-                .catch(function (err) {
-                    alert('Не удалось получить данные: ' + err.message);
-                });
+            fetchRemoteData().catch(function () {});
         });
 
         signOut.insertAdjacentElement('beforebegin', dataItem);
@@ -1143,8 +1155,6 @@
             try { GAME_ID_TO_URL = JSON.parse(cached); dataLoaded = true; }
             catch (e) {}
         }
-        const savedTime = GM_getValue(TIME_KEY, 0);
-        if (savedTime && typeof savedTime === 'number') lastFetchTime = savedTime;
     } catch (e) {}
 
     function tick() {
@@ -1154,13 +1164,6 @@
             applyComment();
         }
         injectMenuItems();
-        if (!panel.classList.contains('hidden')) updateStatus();
-        const nowFresh = isDataFresh();
-        if (wasFresh && !nowFresh) {
-            wasFresh = false;
-        } else if (nowFresh) {
-            wasFresh = true;
-        }
     }
 
     const observer = new MutationObserver(function () {
@@ -1170,9 +1173,6 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
 
     setInterval(tick, 500);
-    setInterval(function () {
-        if (!panel.classList.contains('hidden')) updateStatus();
-    }, 1000);
     window.addEventListener('load', tick);
     document.addEventListener('DOMContentLoaded', tick);
     tick();
