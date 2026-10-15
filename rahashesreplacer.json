@@ -867,7 +867,6 @@
   "4545": {
     "ru": "https://disk.yandex.ru/d/VQ9dIugk-QxBrA",
     "comment": "Протестировал: [user=Shiorat]"
-	"name": "The Adventures of Rocky and Bullwinkle and Friends (Genesis/Mega Drive)"
   },
   "4748": {
     "ru": "https://disk.yandex.ru/d/MjGlgyc9oxAUew",
@@ -920,6 +919,11 @@
   "6311": {
     "ru": "https://disk.yandex.ru/d/zAFjGGt24l20KA",
     "name": "Onimusha: Warlords (PlayStation 2)"
+  },
+  "6333": {
+    "ru": "https://disk.yandex.ru/d/P-aAWg6rLZT_-g",
+    "status": "mastering",
+    "comment": "Протестировал: [user=Sianor]"
   },
   "6371": {
     "ru": "https://disk.yandex.ru/d/PaBQ-IoAYtQNTQ",
