@@ -18379,17 +18379,17 @@ end
 -- Eligibility and automatic account-mail delivery are enforced by the server.
 achievement_tbl[910100] = {
     UI_Type = 0, group = "GOAL_ACHIEVE", major = 1, minor = 7,
-    title = "Alpha Tester",
-    content = { summary = "SpringRO alpha participation reward",
-        details = "Reserved for recorded alpha participants. Eligible accounts receive their title and costume automatically. The Test Coordinator in the Main Office (mainofc 34,30) can check recovery." },
-    resource = { [1] = { text = "Recorded alpha participation" } },
+    title = "Альфа-тестер",
+    content = { summary = "Награда за участие в альфа-тесте SpringRO",
+        details = "Зарезервировано для зарегистрированных участников альфа-теста. Подходящие аккаунты получают титул и костюм автоматически. Координатор тестирования в главном офисе (mainofc 34,30) может проверить восстановление." },
+    resource = { [1] = { text = "Зарегистрированное участие в альфа-тесте" } },
     reward = { item = 31801, title = 1100 }, score = 50
 }
 achievement_tbl[910101] = {
     UI_Type = 0, group = "GOAL_ACHIEVE", major = 1, minor = 7,
-    title = "Beta Tester",
-    content = { summary = "SpringRO beta participation reward",
-        details = "Reserved for recorded beta participants. Eligible accounts receive their title and costume automatically. The Test Coordinator in the Main Office (mainofc 34,30) can check recovery." },
-    resource = { [1] = { text = "Recorded beta participation" } },
+    title = "Бета-тестер",
+    content = { summary = "Награда за участие в бета-тесте SpringRO",
+        details = "Зарезервировано для зарегистрированных участников бета-теста. Подходящие аккаунты получают титул и костюм автоматически. Координатор тестирования в главном офисе (mainofc 34,30) может проверить восстановление." },
+    resource = { [1] = { text = "Зарегистрированное участие в бета-тесте" } },
     reward = { item = 31802, title = 1101 }, score = 50
 }
