@@ -55862,6 +55862,22 @@ tbl = {
 		ClassNum = 526,
 		costume = true
 	},
+	[31803] = {
+		unidentifiedDisplayName = "Costume Lollipop",
+		unidentifiedResourceName = "´ÞÄÞÇÑ»çÅÁ",
+		unidentifiedDescriptionName = { "A sweet souvenir from the Lost Spirits." },
+		identifiedDisplayName = "Costume Lollipop",
+		identifiedResourceName = "´ÞÄÞÇÑ»çÅÁ",
+		identifiedDescriptionName = {
+			"A sweet souvenir from the Lost Spirits.",
+			"Class:^6666CC Costume^000000",
+			"Location:^6666CC Lower^000000",
+			"Weight:^009900 0^000000"
+		},
+		slotCount = 0,
+		ClassNum = 414,
+		costume = true
+	},
 	[5189] = {
 		unidentifiedDisplayName = "Hat",
 		unidentifiedResourceName = "Ä¸",
