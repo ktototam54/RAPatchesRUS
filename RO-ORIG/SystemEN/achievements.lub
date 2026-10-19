@@ -12,10 +12,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Lunatic's Lucky Carrot",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 1",
-			details = "Destroy the Cursed Crystal in Prontera Field 1"
+			summary = "Azure Crystal: Prontera Field 1",
+			details = "Destroy the Azure Crystal in Prontera Field 1"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 1" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 1" } },
 		reward = {},
 		score = 5
 	},
@@ -26,10 +26,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "The Capital's Secrets",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 2",
-			details = "Destroy the Cursed Crystal in Prontera Field 2"
+			summary = "Azure Crystal: Prontera Field 2",
+			details = "Destroy the Azure Crystal in Prontera Field 2"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 2" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 2" } },
 		reward = {},
 		score = 5
 	},
@@ -40,10 +40,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Chonchon's Buried Prize",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 3",
-			details = "Destroy the Cursed Crystal in Prontera Field 3"
+			summary = "Azure Crystal: Prontera Field 3",
+			details = "Destroy the Azure Crystal in Prontera Field 3"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 3" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 3" } },
 		reward = {},
 		score = 5
 	},
@@ -54,10 +54,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mandragora's Hoard",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 4",
-			details = "Destroy the Cursed Crystal in Prontera Field 4"
+			summary = "Azure Crystal: Prontera Field 4",
+			details = "Destroy the Azure Crystal in Prontera Field 4"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 4" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 4" } },
 		reward = {},
 		score = 5
 	},
@@ -68,10 +68,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "West Gate Wealth",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 5",
-			details = "Destroy the Cursed Crystal in Prontera Field 5"
+			summary = "Azure Crystal: Prontera Field 5",
+			details = "Destroy the Azure Crystal in Prontera Field 5"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 5" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 5" } },
 		reward = {},
 		score = 5
 	},
@@ -82,10 +82,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "East Gate Enigma",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 6",
-			details = "Destroy the Cursed Crystal in Prontera Field 6"
+			summary = "Azure Crystal: Prontera Field 6",
+			details = "Destroy the Azure Crystal in Prontera Field 6"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 6" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 6" } },
 		reward = {},
 		score = 5
 	},
@@ -96,10 +96,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Vocal's Field",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 7",
-			details = "Destroy the Cursed Crystal in Prontera Field 7"
+			summary = "Azure Crystal: Prontera Field 7",
+			details = "Destroy the Azure Crystal in Prontera Field 7"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 7" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 7" } },
 		reward = {},
 		score = 5
 	},
@@ -110,10 +110,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "South Gate Spoils",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 8",
-			details = "Destroy the Cursed Crystal in Prontera Field 8"
+			summary = "Azure Crystal: Prontera Field 8",
+			details = "Destroy the Azure Crystal in Prontera Field 8"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 8" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 8" } },
 		reward = {},
 		score = 5
 	},
@@ -124,10 +124,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Deserted Stash",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 9",
-			details = "Destroy the Cursed Crystal in Prontera Field 9"
+			summary = "Azure Crystal: Prontera Field 9",
+			details = "Destroy the Azure Crystal in Prontera Field 9"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 9" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 9" } },
 		reward = {},
 		score = 5
 	},
@@ -138,10 +138,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Grasslands Bounty",
 		content = {
-			summary = "Cursed Crystal: Prontera Field 10",
-			details = "Destroy the Cursed Crystal in Prontera Field 10"
+			summary = "Azure Crystal: Prontera Field 10",
+			details = "Destroy the Azure Crystal in Prontera Field 10"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Field 10" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Field 10" } },
 		reward = {},
 		score = 5
 	},
@@ -152,10 +152,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Magic City Outskirts",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 0",
-			details = "Destroy the Cursed Crystal in Geffen Field 0"
+			summary = "Azure Crystal: Geffen Field 0",
+			details = "Destroy the Azure Crystal in Geffen Field 0"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 0" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 0" } },
 		reward = {},
 		score = 5
 	},
@@ -166,10 +166,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Water's Edge",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 1",
-			details = "Destroy the Cursed Crystal in Geffen Field 1"
+			summary = "Azure Crystal: Geffen Field 1",
+			details = "Destroy the Azure Crystal in Geffen Field 1"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 1" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 1" } },
 		reward = {},
 		score = 5
 	},
@@ -180,10 +180,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Stolen Goods",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 5",
-			details = "Destroy the Cursed Crystal in Geffen Field 5"
+			summary = "Azure Crystal: Geffen Field 5",
+			details = "Destroy the Azure Crystal in Geffen Field 5"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 5" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 5" } },
 		reward = {},
 		score = 5
 	},
@@ -194,10 +194,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Dragon Eggs",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 6",
-			details = "Destroy the Cursed Crystal in Geffen Field 6"
+			summary = "Azure Crystal: Geffen Field 6",
+			details = "Destroy the Azure Crystal in Geffen Field 6"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 6" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 6" } },
 		reward = {},
 		score = 5
 	},
@@ -208,10 +208,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Bridge Crossing",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 7",
-			details = "Destroy the Cursed Crystal in Geffen Field 7"
+			summary = "Azure Crystal: Geffen Field 7",
+			details = "Destroy the Azure Crystal in Geffen Field 7"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 7" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 7" } },
 		reward = {},
 		score = 5
 	},
@@ -222,10 +222,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Shore Line",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 9",
-			details = "Destroy the Cursed Crystal in Geffen Field 9"
+			summary = "Azure Crystal: Geffen Field 9",
+			details = "Destroy the Azure Crystal in Geffen Field 9"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 9" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 9" } },
 		reward = {},
 		score = 5
 	},
@@ -236,10 +236,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Hoarded",
 		content = {
-			summary = "Cursed Crystal: Geffen Field 11",
-			details = "Destroy the Cursed Crystal in Geffen Field 11"
+			summary = "Azure Crystal: Geffen Field 11",
+			details = "Destroy the Azure Crystal in Geffen Field 11"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Field 11" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Field 11" } },
 		reward = {},
 		score = 5
 	},
@@ -250,10 +250,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Oasis",
 		content = {
-			summary = "Cursed Crystal: Sograt Desert Field 11",
-			details = "Destroy the Cursed Crystal in Sograt Desert Field 11"
+			summary = "Azure Crystal: Sograt Desert Field 11",
+			details = "Destroy the Azure Crystal in Sograt Desert Field 11"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sograt Desert Field 11" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sograt Desert Field 11" } },
 		reward = {},
 		score = 5
 	},
@@ -264,10 +264,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Southern Desert",
 		content = {
-			summary = "Cursed Crystal: Sograt Desert Field 12",
-			details = "Destroy the Cursed Crystal in Sograt Desert Field 12"
+			summary = "Azure Crystal: Sograt Desert Field 12",
+			details = "Destroy the Azure Crystal in Sograt Desert Field 12"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sograt Desert Field 12" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sograt Desert Field 12" } },
 		reward = {},
 		score = 5
 	},
@@ -278,10 +278,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Border Crossing",
 		content = {
-			summary = "Cursed Crystal: Sograt Desert Field 13",
-			details = "Destroy the Cursed Crystal in Sograt Desert Field 13"
+			summary = "Azure Crystal: Sograt Desert Field 13",
+			details = "Destroy the Azure Crystal in Sograt Desert Field 13"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sograt Desert Field 13" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sograt Desert Field 13" } },
 		reward = {},
 		score = 5
 	},
@@ -292,10 +292,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Assassin's Lair",
 		content = {
-			summary = "Cursed Crystal: Sograt Desert Field 16",
-			details = "Destroy the Cursed Crystal in Sograt Desert Field 16"
+			summary = "Azure Crystal: Sograt Desert Field 16",
+			details = "Destroy the Azure Crystal in Sograt Desert Field 16"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sograt Desert Field 16" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sograt Desert Field 16" } },
 		reward = {},
 		score = 5
 	},
@@ -306,10 +306,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Desert Shores",
 		content = {
-			summary = "Cursed Crystal: Sograt Desert Field 17",
-			details = "Destroy the Cursed Crystal in Sograt Desert Field 17"
+			summary = "Azure Crystal: Sograt Desert Field 17",
+			details = "Destroy the Azure Crystal in Sograt Desert Field 17"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sograt Desert Field 17" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sograt Desert Field 17" } },
 		reward = {},
 		score = 5
 	},
@@ -320,10 +320,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Earthiest of Worms",
 		content = {
-			summary = "Cursed Crystal: Sograt Desert Field 18",
-			details = "Destroy the Cursed Crystal in Sograt Desert Field 18"
+			summary = "Azure Crystal: Sograt Desert Field 18",
+			details = "Destroy the Azure Crystal in Sograt Desert Field 18"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sograt Desert Field 18" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sograt Desert Field 18" } },
 		reward = {},
 		score = 5
 	},
@@ -334,10 +334,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Southern Forest",
 		content = {
-			summary = "Cursed Crystal: Payon Field 1",
-			details = "Destroy the Cursed Crystal in Payon Field 1"
+			summary = "Azure Crystal: Payon Field 1",
+			details = "Destroy the Azure Crystal in Payon Field 1"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 1" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 1" } },
 		reward = {},
 		score = 5
 	},
@@ -348,10 +348,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Wolves Den",
 		content = {
-			summary = "Cursed Crystal: Payon Field 2",
-			details = "Destroy the Cursed Crystal in Payon Field 2"
+			summary = "Azure Crystal: Payon Field 2",
+			details = "Destroy the Azure Crystal in Payon Field 2"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 2" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 2" } },
 		reward = {},
 		score = 5
 	},
@@ -362,10 +362,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Merchant City Border",
 		content = {
-			summary = "Cursed Crystal: Payon Field 3",
-			details = "Destroy the Cursed Crystal in Payon Field 3"
+			summary = "Azure Crystal: Payon Field 3",
+			details = "Destroy the Azure Crystal in Payon Field 3"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 3" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 3" } },
 		reward = {},
 		score = 5
 	},
@@ -376,10 +376,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Poring Island",
 		content = {
-			summary = "Cursed Crystal: Payon Field 4",
-			details = "Destroy the Cursed Crystal in Payon Field 4"
+			summary = "Azure Crystal: Payon Field 4",
+			details = "Destroy the Azure Crystal in Payon Field 4"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 4" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 4" } },
 		reward = {},
 		score = 5
 	},
@@ -390,10 +390,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Where the Bigfoot Roam",
 		content = {
-			summary = "Cursed Crystal: Payon Field 7",
-			details = "Destroy the Cursed Crystal in Payon Field 7"
+			summary = "Azure Crystal: Payon Field 7",
+			details = "Destroy the Azure Crystal in Payon Field 7"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 7" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 7" } },
 		reward = {},
 		score = 5
 	},
@@ -404,10 +404,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Smokies Hideout",
 		content = {
-			summary = "Cursed Crystal: Payon Field 8",
-			details = "Destroy the Cursed Crystal in Payon Field 8"
+			summary = "Azure Crystal: Payon Field 8",
+			details = "Destroy the Azure Crystal in Payon Field 8"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 8" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 8" } },
 		reward = {},
 		score = 5
 	},
@@ -418,10 +418,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Bamboo Thicket",
 		content = {
-			summary = "Cursed Crystal: Payon Field 9",
-			details = "Destroy the Cursed Crystal in Payon Field 9"
+			summary = "Azure Crystal: Payon Field 9",
+			details = "Destroy the Azure Crystal in Payon Field 9"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 9" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 9" } },
 		reward = {},
 		score = 5
 	},
@@ -432,10 +432,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Deep in the Forest",
 		content = {
-			summary = "Cursed Crystal: Payon Field 10",
-			details = "Destroy the Cursed Crystal in Payon Field 10"
+			summary = "Azure Crystal: Payon Field 10",
+			details = "Destroy the Azure Crystal in Payon Field 10"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Field 10" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Field 10" } },
 		reward = {},
 		score = 5
 	},
@@ -446,10 +446,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Hornet's Nest",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 1",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 1"
+			summary = "Azure Crystal: Mjolnir Field 1",
+			details = "Destroy the Azure Crystal in Mjolnir Field 1"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 1" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 1" } },
 		reward = {},
 		score = 5
 	},
@@ -460,10 +460,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mine Site",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 2",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 2"
+			summary = "Azure Crystal: Mjolnir Field 2",
+			details = "Destroy the Azure Crystal in Mjolnir Field 2"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 2" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 2" } },
 		reward = {},
 		score = 5
 	},
@@ -474,10 +474,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mountaintop",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 3",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 3"
+			summary = "Azure Crystal: Mjolnir Field 3",
+			details = "Destroy the Azure Crystal in Mjolnir Field 3"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 3" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 3" } },
 		reward = {},
 		score = 5
 	},
@@ -488,10 +488,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Spiral Mountain",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 4",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 4"
+			summary = "Azure Crystal: Mjolnir Field 4",
+			details = "Destroy the Azure Crystal in Mjolnir Field 4"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 4" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 4" } },
 		reward = {},
 		score = 5
 	},
@@ -502,10 +502,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mantis Grounds",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 5",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 5"
+			summary = "Azure Crystal: Mjolnir Field 5",
+			details = "Destroy the Azure Crystal in Mjolnir Field 5"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 5" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 5" } },
 		reward = {},
 		score = 5
 	},
@@ -516,10 +516,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mjolnir Crossing",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 6",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 6"
+			summary = "Azure Crystal: Mjolnir Field 6",
+			details = "Destroy the Azure Crystal in Mjolnir Field 6"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 6" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 6" } },
 		reward = {},
 		score = 5
 	},
@@ -530,10 +530,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mjolnir Lake",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 7",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 7"
+			summary = "Azure Crystal: Mjolnir Field 7",
+			details = "Destroy the Azure Crystal in Mjolnir Field 7"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 7" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 7" } },
 		reward = {},
 		score = 5
 	},
@@ -544,10 +544,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Ladybug Paradise",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 8",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 8"
+			summary = "Azure Crystal: Mjolnir Field 8",
+			details = "Destroy the Azure Crystal in Mjolnir Field 8"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 8" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 8" } },
 		reward = {},
 		score = 5
 	},
@@ -558,10 +558,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Rocking Bridge",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 9",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 9"
+			summary = "Azure Crystal: Mjolnir Field 9",
+			details = "Destroy the Azure Crystal in Mjolnir Field 9"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 9" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 9" } },
 		reward = {},
 		score = 5
 	},
@@ -572,10 +572,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Centipede Dream",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 10",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 10"
+			summary = "Azure Crystal: Mjolnir Field 10",
+			details = "Destroy the Azure Crystal in Mjolnir Field 10"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 10" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 10" } },
 		reward = {},
 		score = 5
 	},
@@ -586,10 +586,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Far From Home",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 11",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 11"
+			summary = "Azure Crystal: Mjolnir Field 11",
+			details = "Destroy the Azure Crystal in Mjolnir Field 11"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 11" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 11" } },
 		reward = {},
 		score = 5
 	},
@@ -600,10 +600,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Mjolnir Foothills",
 		content = {
-			summary = "Cursed Crystal: Mjolnir Field 12",
-			details = "Destroy the Cursed Crystal in Mjolnir Field 12"
+			summary = "Azure Crystal: Mjolnir Field 12",
+			details = "Destroy the Azure Crystal in Mjolnir Field 12"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Mjolnir Field 12" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Mjolnir Field 12" } },
 		reward = {},
 		score = 5
 	},
@@ -614,10 +614,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Papuchicha Forest",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 1",
-			details = "Destroy the Cursed Crystal in Comodo Field 1"
+			summary = "Azure Crystal: Comodo Field 1",
+			details = "Destroy the Azure Crystal in Comodo Field 1"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 1" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 1" } },
 		reward = {},
 		score = 5
 	},
@@ -628,10 +628,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Shellfish Coast",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 2",
-			details = "Destroy the Cursed Crystal in Comodo Field 2"
+			summary = "Azure Crystal: Comodo Field 2",
+			details = "Destroy the Azure Crystal in Comodo Field 2"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 2" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 2" } },
 		reward = {},
 		score = 5
 	},
@@ -642,10 +642,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Zenhair Marsh",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 3",
-			details = "Destroy the Cursed Crystal in Comodo Field 3"
+			summary = "Azure Crystal: Comodo Field 3",
+			details = "Destroy the Azure Crystal in Comodo Field 3"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 3" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 3" } },
 		reward = {},
 		score = 5
 	},
@@ -656,10 +656,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Kokomo Beach",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 4",
-			details = "Destroy the Cursed Crystal in Comodo Field 4"
+			summary = "Azure Crystal: Comodo Field 4",
+			details = "Destroy the Azure Crystal in Comodo Field 4"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 4" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 4" } },
 		reward = {},
 		score = 5
 	},
@@ -670,10 +670,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Fortress Saint Darmain West",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 6",
-			details = "Destroy the Cursed Crystal in Comodo Field 6"
+			summary = "Azure Crystal: Comodo Field 6",
+			details = "Destroy the Azure Crystal in Comodo Field 6"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 6" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 6" } },
 		reward = {},
 		score = 5
 	},
@@ -684,10 +684,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Beacon Island",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 7",
-			details = "Destroy the Cursed Crystal in Comodo Field 7"
+			summary = "Azure Crystal: Comodo Field 7",
+			details = "Destroy the Azure Crystal in Comodo Field 7"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 7" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 7" } },
 		reward = {},
 		score = 5
 	},
@@ -698,10 +698,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Fortress Saint Darmain East",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 8",
-			details = "Destroy the Cursed Crystal in Comodo Field 8"
+			summary = "Azure Crystal: Comodo Field 8",
+			details = "Destroy the Azure Crystal in Comodo Field 8"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 8" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 8" } },
 		reward = {},
 		score = 5
 	},
@@ -712,10 +712,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Fortress Saint Darmain South",
 		content = {
-			summary = "Cursed Crystal: Comodo Field 9",
-			details = "Destroy the Cursed Crystal in Comodo Field 9"
+			summary = "Azure Crystal: Comodo Field 9",
+			details = "Destroy the Azure Crystal in Comodo Field 9"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Field 9" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Field 9" } },
 		reward = {},
 		score = 5
 	},
@@ -726,10 +726,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Border Posts",
 		content = {
-			summary = "Cursed Crystal: Juno Field 1",
-			details = "Destroy the Cursed Crystal in Juno Field 1"
+			summary = "Azure Crystal: Juno Field 1",
+			details = "Destroy the Azure Crystal in Juno Field 1"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Juno Field 1" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Juno Field 1" } },
 		reward = {},
 		score = 5
 	},
@@ -740,10 +740,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Kiel Hyre's Cottage",
 		content = {
-			summary = "Cursed Crystal: Juno Field 2",
-			details = "Destroy the Cursed Crystal in Juno Field 2"
+			summary = "Azure Crystal: Juno Field 2",
+			details = "Destroy the Azure Crystal in Juno Field 2"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Juno Field 2" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Juno Field 2" } },
 		reward = {},
 		score = 5
 	},
@@ -754,10 +754,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "El Mes Plateau",
 		content = {
-			summary = "Cursed Crystal: Juno Field 3",
-			details = "Destroy the Cursed Crystal in Juno Field 3"
+			summary = "Azure Crystal: Juno Field 3",
+			details = "Destroy the Azure Crystal in Juno Field 3"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Juno Field 3" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Juno Field 3" } },
 		reward = {},
 		score = 5
 	},
@@ -768,10 +768,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Gates of Yuno",
 		content = {
-			summary = "Cursed Crystal: Juno Field 4",
-			details = "Destroy the Cursed Crystal in Juno Field 4"
+			summary = "Azure Crystal: Juno Field 4",
+			details = "Destroy the Azure Crystal in Juno Field 4"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Juno Field 4" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Juno Field 4" } },
 		reward = {},
 		score = 5
 	},
@@ -782,10 +782,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Tick Tock Clock",
 		content = {
-			summary = "Cursed Crystal: Clock Tower 4F",
-			details = "Destroy the Cursed Crystal in Clock Tower 4F"
+			summary = "Azure Crystal: Clock Tower 4F",
+			details = "Destroy the Azure Crystal in Clock Tower 4F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Clock Tower 4F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Clock Tower 4F" } },
 		reward = {},
 		score = 5
 	},
@@ -796,10 +796,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Burrowed Deep",
 		content = {
-			summary = "Cursed Crystal: Ant Hell B2F",
-			details = "Destroy the Cursed Crystal in Ant Hell B2F"
+			summary = "Azure Crystal: Ant Hell B2F",
+			details = "Destroy the Azure Crystal in Ant Hell B2F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Ant Hell B2F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Ant Hell B2F" } },
 		reward = {},
 		score = 5
 	},
@@ -810,10 +810,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Beach Caverns",
 		content = {
-			summary = "Cursed Crystal: Comodo Dungeon B3F",
-			details = "Destroy the Cursed Crystal in Comodo Dungeon B3F"
+			summary = "Azure Crystal: Comodo Dungeon B3F",
+			details = "Destroy the Azure Crystal in Comodo Dungeon B3F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Comodo Dungeon B3F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Comodo Dungeon B3F" } },
 		reward = {},
 		score = 5
 	},
@@ -824,10 +824,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Below the Gears",
 		content = {
-			summary = "Cursed Crystal: Clock Tower B4F",
-			details = "Destroy the Cursed Crystal in Clock Tower B4F"
+			summary = "Azure Crystal: Clock Tower B4F",
+			details = "Destroy the Azure Crystal in Clock Tower B4F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Clock Tower B4F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Clock Tower B4F" } },
 		reward = {},
 		score = 5
 	},
@@ -838,10 +838,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Gates of Geffenia",
 		content = {
-			summary = "Cursed Crystal: Geffen Dungeon B2F",
-			details = "Destroy the Cursed Crystal in Geffen Dungeon B2F"
+			summary = "Azure Crystal: Geffen Dungeon B2F",
+			details = "Destroy the Azure Crystal in Geffen Dungeon B2F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Geffen Dungeon B2F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Geffen Dungeon B2F" } },
 		reward = {},
 		score = 5
 	},
@@ -852,10 +852,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Glastheim Castle",
 		content = {
-			summary = "Cursed Crystal: Glastheim Castle",
-			details = "Destroy the Cursed Crystal in Glastheim Castle"
+			summary = "Azure Crystal: Glastheim Castle",
+			details = "Destroy the Azure Crystal in Glastheim Castle"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Glastheim Castle" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Glastheim Castle" } },
 		reward = {},
 		score = 5
 	},
@@ -866,10 +866,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Glastheim Sewers",
 		content = {
-			summary = "Cursed Crystal: Glastheim Sewers B4F",
-			details = "Destroy the Cursed Crystal in Glastheim Sewers B4F"
+			summary = "Azure Crystal: Glastheim Sewers B4F",
+			details = "Destroy the Azure Crystal in Glastheim Sewers B4F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Glastheim Sewers B4F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Glastheim Sewers B4F" } },
 		reward = {},
 		score = 5
 	},
@@ -880,10 +880,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Glastheim Culvert",
 		content = {
-			summary = "Cursed Crystal: Glastheim Culvert B2F",
-			details = "Destroy the Cursed Crystal in Glastheim Culvert B2F"
+			summary = "Azure Crystal: Glastheim Culvert B2F",
+			details = "Destroy the Azure Crystal in Glastheim Culvert B2F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Glastheim Culvert B2F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Glastheim Culvert B2F" } },
 		reward = {},
 		score = 5
 	},
@@ -894,10 +894,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Glastheim Prison",
 		content = {
-			summary = "Cursed Crystal: Glastheim Prison",
-			details = "Destroy the Cursed Crystal in Glastheim Prison"
+			summary = "Azure Crystal: Glastheim Prison",
+			details = "Destroy the Azure Crystal in Glastheim Prison"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Glastheim Prison" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Glastheim Prison" } },
 		reward = {},
 		score = 5
 	},
@@ -908,10 +908,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Sphinx B5F Exploration",
 		content = {
-			summary = "Cursed Crystal: Sphinx B5F",
-			details = "Destroy the Cursed Crystal in Sphinx B5F"
+			summary = "Azure Crystal: Sphinx B5F",
+			details = "Destroy the Azure Crystal in Sphinx B5F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sphinx B5F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sphinx B5F" } },
 		reward = {},
 		score = 5
 	},
@@ -922,10 +922,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Sewer Games",
 		content = {
-			summary = "Cursed Crystal: Prontera Culvert B4F",
-			details = "Destroy the Cursed Crystal in Prontera Culvert B4F"
+			summary = "Azure Crystal: Prontera Culvert B4F",
+			details = "Destroy the Azure Crystal in Prontera Culvert B4F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Prontera Culvert B4F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Prontera Culvert B4F" } },
 		reward = {},
 		score = 5
 	},
@@ -936,10 +936,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Coal Mine 3F Exploration",
 		content = {
-			summary = "Cursed Crystal: Coal Mine 3F",
-			details = "Destroy the Cursed Crystal in Coal Mine 3F"
+			summary = "Azure Crystal: Coal Mine 3F",
+			details = "Destroy the Azure Crystal in Coal Mine 3F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Coal Mine 3F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Coal Mine 3F" } },
 		reward = {},
 		score = 5
 	},
@@ -950,10 +950,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Pyramid 6F Exploration",
 		content = {
-			summary = "Cursed Crystal: Pyramid 6F",
-			details = "Destroy the Cursed Crystal in Pyramid 6F"
+			summary = "Azure Crystal: Pyramid 6F",
+			details = "Destroy the Azure Crystal in Pyramid 6F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Pyramid 6F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Pyramid 6F" } },
 		reward = {},
 		score = 5
 	},
@@ -964,10 +964,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Undead Grounds",
 		content = {
-			summary = "Cursed Crystal: Orc Dungeon B2F",
-			details = "Destroy the Cursed Crystal in Orc Dungeon B2F"
+			summary = "Azure Crystal: Orc Dungeon B2F",
+			details = "Destroy the Azure Crystal in Orc Dungeon B2F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Orc Dungeon B2F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Orc Dungeon B2F" } },
 		reward = {},
 		score = 5
 	},
@@ -978,10 +978,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Troubled Caves",
 		content = {
-			summary = "Cursed Crystal: Payon Cave B4F",
-			details = "Destroy the Cursed Crystal in Payon Cave B4F"
+			summary = "Azure Crystal: Payon Cave B4F",
+			details = "Destroy the Azure Crystal in Payon Cave B4F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Payon Cave B4F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Payon Cave B4F" } },
 		reward = {},
 		score = 5
 	},
@@ -992,10 +992,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Labyrinth",
 		content = {
-			summary = "Cursed Crystal: Labyrinth Forest 3F",
-			details = "Destroy the Cursed Crystal in Labyrinth Forest 3F"
+			summary = "Azure Crystal: Labyrinth Forest 3F",
+			details = "Destroy the Azure Crystal in Labyrinth Forest 3F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Labyrinth Forest 3F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Labyrinth Forest 3F" } },
 		reward = {},
 		score = 5
 	},
@@ -1006,10 +1006,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Ocean Floor",
 		content = {
-			summary = "Cursed Crystal: Sunken Ship B2F",
-			details = "Destroy the Cursed Crystal in Sunken Ship B2F"
+			summary = "Azure Crystal: Sunken Ship B2F",
+			details = "Destroy the Azure Crystal in Sunken Ship B2F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Sunken Ship B2F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Sunken Ship B2F" } },
 		reward = {},
 		score = 5
 	},
@@ -1020,10 +1020,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Turtle Stew",
 		content = {
-			summary = "Cursed Crystal: Turtle Dungeon B4F",
-			details = "Destroy the Cursed Crystal in Turtle Dungeon B4F"
+			summary = "Azure Crystal: Turtle Dungeon B4F",
+			details = "Destroy the Azure Crystal in Turtle Dungeon B4F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Turtle Dungeon B4F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Turtle Dungeon B4F" } },
 		reward = {},
 		score = 5
 	},
@@ -1034,10 +1034,10 @@ achievement_tbl = {
 		minor = 1,
 		title = "Santa's Sack",
 		content = {
-			summary = "Cursed Crystal: Toy Factory B2F",
-			details = "Destroy the Cursed Crystal in Toy Factory B2F"
+			summary = "Azure Crystal: Toy Factory B2F",
+			details = "Destroy the Azure Crystal in Toy Factory B2F"
 		},
-		resource = { [1] = { text = "Destroy the Cursed Crystal in Toy Factory B2F" } },
+		resource = { [1] = { text = "Destroy the Azure Crystal in Toy Factory B2F" } },
 		reward = {},
 		score = 5
 	},
@@ -1657,6 +1657,566 @@ achievement_tbl = {
 		resource = { [1] = { text = "Successfully tame a Deviruchi" } },
 		reward = {},
 		score = 25
+	},
+	[1021980] = {
+		UI_Type = 0,
+		group = "GOAL_ACHIEVE",
+		major = 9,
+		minor = 0,
+		title = "Out Before Dawn",
+		content = {
+			summary = "Escape Midnight in Payon",
+			details = "Escape Midnight in Payon. Visit all five marked houses, then reach the exit before the dead catch you."
+		},
+		resource = { [1] = { text = "Escape Midnight in Payon" } },
+		reward = {},
+		score = 5
+	},
+	[1022000] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 9,
+		minor = 0,
+		title = "Sweet Tooth",
+		content = {
+			summary = "Obtain the Costume Lollipop from a Lost Spirit",
+			details = "Defeat Lost Spirits during Midnight in Payon until one leaves a Costume Lollipop behind."
+		},
+		resource = { [1] = { text = "Costume Lollipop", count = 1 } },
+		reward = {},
+		score = 10
+	},
+	[1022020] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 9,
+		minor = 0,
+		title = "Pumpkin Head",
+		content = {
+			summary = "Buy the Costume Pumpkin-Head",
+			details = "Trade 60 Halloween Tickets to the Halloween Witch in Payon for the Costume Pumpkin-Head."
+		},
+		resource = { [1] = { text = "Costume Pumpkin-Head", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022040] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 9,
+		minor = 0,
+		title = "Hex Appeal",
+		content = {
+			summary = "Buy the Costume Witch's Pumpkin Hat",
+			details = "Trade 120 Halloween Tickets to the Halloween Witch in Payon for the Costume Witch's Pumpkin Hat."
+		},
+		resource = { [1] = { text = "Costume Witch's Pumpkin Hat", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022060] = {
+		UI_Type = 0,
+		group = "GOAL_ACHIEVE",
+		major = 5,
+		minor = 1,
+		title = "Her Diary",
+		content = {
+			summary = "Have Munak's Grandma craft Her Heart",
+			details = "Bring Munak's Grandma in Comodo a Girl's Diary and a Danggie to craft Her Heart, the Bon Gun taming item."
+		},
+		resource = { [1] = { text = "Her Heart", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022080] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Unripe Apple",
+		content = {
+			summary = "Loot the Unripe Apple (Poring taming item)",
+			details = "Loot the Unripe Apple, the Poring taming item, from Mastering, Chepet or Poring."
+		},
+		resource = { [1] = { text = "Unripe Apple", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022100] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Orange Juice",
+		content = {
+			summary = "Loot the Orange Juice (Drops taming item)",
+			details = "Loot the Orange Juice, the Drops taming item, from Drops."
+		},
+		resource = { [1] = { text = "Orange Juice", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022120] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Bitter Herb",
+		content = {
+			summary = "Loot the Bitter Herb (Poporing taming item)",
+			details = "Loot the Bitter Herb, the Poporing taming item, from Green Plant."
+		},
+		resource = { [1] = { text = "Bitter Herb", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022140] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Rainbow Carrot",
+		content = {
+			summary = "Loot the Rainbow Carrot (Lunatic taming item)",
+			details = "Loot the Rainbow Carrot, the Lunatic taming item, from Eclipse or Lunatic."
+		},
+		resource = { [1] = { text = "Rainbow Carrot", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022160] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Earthworm the Dude",
+		content = {
+			summary = "Loot the Earthworm the Dude (Picky taming item)",
+			details = "Loot the Earthworm the Dude, the Picky taming item, from Kukre."
+		},
+		resource = { [1] = { text = "Earthworm the Dude", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022180] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Rotten Fish",
+		content = {
+			summary = "Loot the Rotten Fish (ChonChon taming item)",
+			details = "Loot the Rotten Fish, the ChonChon taming item, from Wild Rose or Megalodon."
+		},
+		resource = { [1] = { text = "Rotten Fish", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022200] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Rusty Iron",
+		content = {
+			summary = "Loot the Rusty Iron (Steel ChonChon taming item)",
+			details = "Loot the Rusty Iron, the Steel ChonChon taming item, from Dragonfly or Scorpion."
+		},
+		resource = { [1] = { text = "Rusty Iron", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022220] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Monster Juice",
+		content = {
+			summary = "Loot the Monster Juice (Hunter Fly taming item)",
+			details = "Loot the Monster Juice, the Hunter Fly taming item, from Vagabond Wolf."
+		},
+		resource = { [1] = { text = "Monster Juice", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022240] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Sweet Milk",
+		content = {
+			summary = "Loot the Sweet Milk (Savage Babe taming item)",
+			details = "Loot the Sweet Milk, the Savage Babe taming item, from Savage Babe."
+		},
+		resource = { [1] = { text = "Sweet Milk", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022260] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Well-Dried Bone",
+		content = {
+			summary = "Loot the Well-Dried Bone (Desert Wolf Puppy taming item)",
+			details = "Loot the Well-Dried Bone, the Desert Wolf Puppy taming item, from Pirate Skeleton."
+		},
+		resource = { [1] = { text = "Well-Dried Bone", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022280] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Singing Flower",
+		content = {
+			summary = "Loot the Singing Flower (Rocker taming item)",
+			details = "Loot the Singing Flower, the Rocker taming item, from Flora."
+		},
+		resource = { [1] = { text = "Singing Flower", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022300] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Dew Laden Moss",
+		content = {
+			summary = "Loot the Dew Laden Moss (Spore taming item)",
+			details = "Loot the Dew Laden Moss, the Spore taming item, from Black Mushroom, Red Mushroom or Plankton."
+		},
+		resource = { [1] = { text = "Dew Laden Moss", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022320] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Deadly Noxious Herb",
+		content = {
+			summary = "Loot the Deadly Noxious Herb (Poison Spore taming item)",
+			details = "Loot the Deadly Noxious Herb, the Poison Spore taming item, from Marina."
+		},
+		resource = { [1] = { text = "Deadly Noxious Herb", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022340] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Fatty Chubby Earthworm",
+		content = {
+			summary = "Loot the Fatty Chubby Earthworm (PecoPeco taming item)",
+			details = "Loot the Fatty Chubby Earthworm, the PecoPeco taming item, from Hode."
+		},
+		resource = { [1] = { text = "Fatty Chubby Earthworm", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022360] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Sweet Potato",
+		content = {
+			summary = "Loot the Sweet Potato (Smokie taming item)",
+			details = "Loot the Sweet Potato, the Smokie taming item, from Horong."
+		},
+		resource = { [1] = { text = "Sweet Potato", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022380] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Tropical Banana",
+		content = {
+			summary = "Loot the Tropical Banana (Yoyo taming item)",
+			details = "Loot the Tropical Banana, the Yoyo taming item, from Choco."
+		},
+		resource = { [1] = { text = "Tropical Banana", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022400] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Old Broom",
+		content = {
+			summary = "Loot the Old Broom (Dokebi taming item)",
+			details = "Loot the Old Broom, the Dokebi taming item, from Alice or Bathory."
+		},
+		resource = { [1] = { text = "Old Broom", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022420] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Silver Knife of Chastity",
+		content = {
+			summary = "Loot the Silver Knife of Chastity (Sohee taming item)",
+			details = "Loot the Silver Knife of Chastity, the Sohee taming item, from Moonlight, Cat'o'Nine Tails or Ogretooth."
+		},
+		resource = { [1] = { text = "Silver Knife of Chastity", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022440] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Armlet of Obedience",
+		content = {
+			summary = "Loot the Armlet of Obedience (Isis taming item)",
+			details = "Loot the Armlet of Obedience, the Isis taming item, from Maya, Maya Purple or Verit."
+		},
+		resource = { [1] = { text = "Armlet of Obedience", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022460] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Shining Stone",
+		content = {
+			summary = "Loot the Shining Stone (Petit taming item)",
+			details = "Loot the Shining Stone, the Petit taming item, from Zenorc."
+		},
+		resource = { [1] = { text = "Shining Stone", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022480] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Contract in Shadow",
+		content = {
+			summary = "Loot the Contract in Shadow (Deviruchi taming item)",
+			details = "Loot the Contract in Shadow, the Deviruchi taming item, from Joker."
+		},
+		resource = { [1] = { text = "Contract in Shadow", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022500] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 2,
+		title = "Pet Lure: Book of the Devil",
+		content = {
+			summary = "Loot the Book of the Devil (Baphomet Jr. taming item)",
+			details = "Loot the Book of the Devil, the Baphomet Jr. taming item, from Marduk."
+		},
+		resource = { [1] = { text = "Book of the Devil", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022520] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Silk Ribbon",
+		content = {
+			summary = "Loot the Silk Ribbon (Lunatic pet equipment)",
+			details = "Loot the Silk Ribbon, the Lunatic pet equipment, from Sting."
+		},
+		resource = { [1] = { text = "Silk Ribbon", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022540] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Tiny Egg Shell",
+		content = {
+			summary = "Loot the Tiny Egg Shell (Picky pet equipment)",
+			details = "Loot the Tiny Egg Shell, the Picky pet equipment, from Super Picky."
+		},
+		resource = { [1] = { text = "Tiny Egg Shell", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022560] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Green Lace",
+		content = {
+			summary = "Loot the Green Lace (Savage Babe pet equipment)",
+			details = "Loot the Green Lace, the Savage Babe pet equipment, from Worm Tail."
+		},
+		resource = { [1] = { text = "Green Lace", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022580] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Transparent Head Protector",
+		content = {
+			summary = "Loot the Transparent Head Protector (Desert Wolf Puppy pet equipment)",
+			details = "Loot the Transparent Head Protector, the Desert Wolf Puppy pet equipment, from Marine Sphere."
+		},
+		resource = { [1] = { text = "Transparent Head Protector", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022600] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Bark Shorts",
+		content = {
+			summary = "Loot the Bark Shorts (Spore pet equipment)",
+			details = "Loot the Bark Shorts, the Spore pet equipment, from Argos."
+		},
+		resource = { [1] = { text = "Bark Shorts", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022620] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Battered Pot",
+		content = {
+			summary = "Loot the Battered Pot (PecoPeco pet equipment)",
+			details = "Loot the Battered Pot, the PecoPeco pet equipment, from Martin."
+		},
+		resource = { [1] = { text = "Battered Pot", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022640] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Red Scarf",
+		content = {
+			summary = "Loot the Red Scarf (Smokie pet equipment)",
+			details = "Loot the Red Scarf, the Smokie pet equipment, from Anolian or Chepet."
+		},
+		resource = { [1] = { text = "Red Scarf", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022660] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Monkey Circlet",
+		content = {
+			summary = "Loot the Monkey Circlet (Yoyo pet equipment)",
+			details = "Loot the Monkey Circlet, the Yoyo pet equipment, from Orc Hero."
+		},
+		resource = { [1] = { text = "Monkey Circlet", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022680] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Punisher",
+		content = {
+			summary = "Loot the Punisher (Munak pet equipment)",
+			details = "Loot the Punisher, the Munak pet equipment, from Moonlight or Cat'o'Nine Tails."
+		},
+		resource = { [1] = { text = "Punisher", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022700] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Wig",
+		content = {
+			summary = "Loot the Wig (Dokebi pet equipment)",
+			details = "Loot the Wig, the Dokebi pet equipment, from Myst."
+		},
+		resource = { [1] = { text = "Wig", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022720] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Golden Bell",
+		content = {
+			summary = "Loot the Golden Bell (Sohee pet equipment)",
+			details = "Loot the Golden Bell, the Sohee pet equipment, from Golden Thief Bug."
+		},
+		resource = { [1] = { text = "Golden Bell", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022740] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Queen's Hair Ornament",
+		content = {
+			summary = "Loot the Queen's Hair Ornament (Isis pet equipment)",
+			details = "Loot the Queen's Hair Ornament, the Isis pet equipment, from Maya or Maya Purple."
+		},
+		resource = { [1] = { text = "Queen's Hair Ornament", count = 1 } },
+		reward = {},
+		score = 5
+	},
+	[1022760] = {
+		UI_Type = 0,
+		group = "BATTLE",
+		major = 5,
+		minor = 3,
+		title = "Pet Gear: Pacifier",
+		content = {
+			summary = "Loot the Pacifier (Deviruchi pet equipment)",
+			details = "Loot the Pacifier, the Deviruchi pet equipment, from Punk."
+		},
+		resource = { [1] = { text = "Pacifier", count = 1 } },
+		reward = {},
+		score = 5
 	},
 	[1003960] = {
 		UI_Type = 0,
@@ -16459,7 +17019,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Monster Juice",
 		content = {
 			summary = "Have Iwado craft a Monster Juice",
@@ -16473,7 +17033,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Singing Flower",
 		content = {
 			summary = "Have Iwado craft a Singing Flower",
@@ -16487,7 +17047,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Wild Flower",
 		content = {
 			summary = "Have Iwado craft a Wild Flower",
@@ -16501,7 +17061,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Skull Helm",
 		content = {
 			summary = "Have YuU craft a Skull Helm",
@@ -16515,7 +17075,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Monster Oxygen Mask",
 		content = {
 			summary = "Have YuU craft a Monster Oxygen Mask",
@@ -16529,7 +17089,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Silk Ribbon",
 		content = {
 			summary = "Have YuU craft a Silk Ribbon",
@@ -16543,7 +17103,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Stellar Hairpin",
 		content = {
 			summary = "Have YuU craft a Stellar Hairpin",
@@ -16557,7 +17117,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Tiny Egg Shell",
 		content = {
 			summary = "Have YuU craft a Tiny Egg Shell",
@@ -16571,7 +17131,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Rocker Glasses",
 		content = {
 			summary = "Have YuU craft a pair of Rocker Glasses",
@@ -16585,7 +17145,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Book of Devil",
 		content = {
 			summary = "Have Shogo craft a Book of Devil",
@@ -16599,7 +17159,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "No Recipient",
 		content = {
 			summary = "Have Shogo craft a No Recipient",
@@ -16613,7 +17173,7 @@ achievement_tbl = {
 		UI_Type = 0,
 		group = "GOAL_ACHIEVE",
 		major = 5,
-		minor = 0,
+		minor = 1,
 		title = "Orc Trophy",
 		content = {
 			summary = "Have Shogo craft an Orc Trophy",
@@ -18397,22 +18957,3 @@ function main()
 	end
 	return true, "good"
 end
-
--- Local launch tester rewards: display only; excluded from all RA mappings.
--- Eligibility and automatic account-mail delivery are enforced by the server.
-achievement_tbl[910100] = {
-    UI_Type = 0, group = "GOAL_ACHIEVE", major = 1, minor = 7,
-    title = "Alpha Tester",
-    content = { summary = "SpringRO alpha participation reward",
-        details = "Reserved for recorded alpha participants. Eligible accounts receive their title and costume automatically. The Test Coordinator in the Main Office (mainofc 34,30) can check recovery." },
-    resource = { [1] = { text = "Recorded alpha participation" } },
-    reward = { item = 31801, title = 1100 }, score = 50
-}
-achievement_tbl[910101] = {
-    UI_Type = 0, group = "GOAL_ACHIEVE", major = 1, minor = 7,
-    title = "Beta Tester",
-    content = { summary = "SpringRO beta participation reward",
-        details = "Reserved for recorded beta participants. Eligible accounts receive their title and costume automatically. The Test Coordinator in the Main Office (mainofc 34,30) can check recovery." },
-    resource = { [1] = { text = "Recorded beta participation" } },
-    reward = { item = 31802, title = 1101 }, score = 50
-}
