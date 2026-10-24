@@ -419,6 +419,12 @@
     "comment": "Официальная поддержка",
     "name": "Earthworm Jim 2 (Genesis/Mega Drive)"
   },
+  "2199": {
+    "name": "The Simpsons: Hit & Run (GameCube)",
+    "ru": "https://disk.yandex.ru/d/eVRJ8ixlhIEa2g",
+    "status": "beaten",
+    "comment": "Протестировал: [user=Sianor]"
+  },
   "2209": {
     "ru": "https://disk.yandex.ru/d/Imwxip0rQAo8Bw",
     "status": "mastering",
@@ -495,6 +501,12 @@
   "2739": {
     "ru": "https://disk.yandex.ru/d/twBwU_a5kfjsww",
     "name": "Grand Theft Auto: Vice City (PlayStation 2)"
+  },
+  "2752": {
+    "name": "Kunio-kun no Nekketsu Soccer League (NES/Famicom)",
+    "ru": "https://disk.yandex.ru/d/kXnKukJhTdkSMA",
+    "status": "mastering",
+    "comment": "Официальная поддержка"
   },
   "2762": {
     "name": "Grand Theft Auto: Vice City Stories (PlayStation 2)",
@@ -593,6 +605,9 @@
   "3061": {
     "ru": "https://disk.yandex.ru/d/aFDK34av1hJXkQ",
     "name": "Beyond Good & Evil (PlayStation 2)"
+  },
+  "3062": {
+    "name": "Jak II (PlayStation 2)"
   },
   "3100": {
     "ru": "https://disk.yandex.ru/d/feVcZ1fuU93qGw",
@@ -1458,6 +1473,10 @@
     "ru": "https://disk.yandex.ru/d/lsuXbrQI4PNDoA",
     "name": "Jak X: Combat Racing (PlayStation 2)"
   },
+  "19240": {
+    "name": "Jak and Daxter: The Lost Frontier (PlayStation 2)",
+    "ru": "https://disk.yandex.ru/d/i8mpJ6MWE71vEg"
+  },
   "19258": {
     "ru": "https://disk.yandex.ru/d/XB-L1M5vf31uLQ",
     "name": "The Hobbit: The Prelude to the Lord of the Rings (PlayStation 2)"
@@ -2081,9 +2100,9 @@
     "name": "Kya: Dark Lineage (PlayStation 2)"
   },
   "23939": {
-    "ru": "https://disk.yandex.ru/d/vXHgR8prnTCzuw",
-    "comment": "Нужно включить замену текстур",
-    "name": "Astérix & Obélix XXL (PlayStation 2)"
+    "name": "Astérix & Obélix XXL (PlayStation 2)",
+    "status": "ru_impossible",
+    "comment": "Софтлок"
   },
   "23940": {
     "ru": "https://disk.yandex.ru/d/vTiJVB-ObIeHZA",
