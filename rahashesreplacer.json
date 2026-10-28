@@ -906,6 +906,12 @@
     "drive": "https://drive.google.com/drive/folders/1HwuEYFHtHWAKZb2tZq9qFOMdlRsJyjCH",
     "name": "Resident Evil: Gaiden (Game Boy Color)"
   },
+  "5315": {
+    "name": "The Legend of Spyro: A New Beginning (Game Boy Advance)",
+    "ru": "https://disk.yandex.ru/d/JeM7RoFQTQy-DA",
+    "status": "mastering",
+    "comment": "Официальная поддержка"
+  },
   "5522": {
     "ru": "https://disk.yandex.ru/d/GnnJFVX7r8ATnw",
     "status": "mastering",
@@ -1270,6 +1276,10 @@
   "18173": {
     "ru": "https://disk.yandex.ru/d/GucwI6vlomG5PA",
     "name": "Spider-Man 2 (PlayStation Portable)"
+  },
+  "18217": {
+    "name": "Baroque: Yuganda Mousou (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/ZNUXdm1EEmbQKg"
   },
   "18323": {
     "ru": "https://disk.yandex.ru/d/la9UrNnxMv_u-A",
@@ -2115,6 +2125,11 @@
   "23942": {
     "comment": "Перевод на стадии редактуры текста. Скоро...",
     "name": "Kung Fu Panda (PlayStation 2)"
+  },
+  "23958": {
+    "name": "Call of Duty: Roads to Victory (PlayStation Portable)",
+    "ru": "https://disk.yandex.ru/d/DGTszSxaoz1iCw",
+    "comment": "Нужно включить подменяемые текстуры!"
   },
   "24119": {
     "ru": "https://disk.yandex.ru/d/J5KkLOF-m0ANFQ",
