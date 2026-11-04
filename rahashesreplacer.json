@@ -753,6 +753,12 @@
     "comment": "Официальная поддержка",
     "name": "Shodai Nekketsu Kouha Kunio-kun (SNES/Super Famicom)"
   },
+  "3537": {
+    "name": "God of War: Chains of Olympus (PlayStation Portable)",
+    "ru": "https://disk.yandex.ru/d/KDdG3Ig3MMvLmA",
+    "status": "mastering",
+    "comment": "Протестировал: [user=Sianor]"
+  },
   "3538": {
     "ru": "https://disk.yandex.ru/d/JwRUztw2pXMtQA",
     "status": "mastering",
@@ -784,6 +790,10 @@
   "3771": {
     "ru": "https://disk.yandex.ru/d/pRB3H3Z43r_Pjg",
     "name": "Soldier of Fortune (Dreamcast)"
+  },
+  "3779": {
+    "name": "Sonic Adventure 2: Battle (GameCube)",
+    "ru": "https://disk.yandex.ru/d/MbqxLnGSL7lrPw"
   },
   "3859": {
     "drive": "https://drive.google.com/drive/folders/1820S-Z3JQEV8srwjDFkYieMvXucRnuLa",
@@ -918,6 +928,10 @@
     "comment": "Официальная поддержка",
     "name": "Castlevania: Dawn of Sorrow (Nintendo DS)"
   },
+  "5531": {
+    "name": "Felony 11-79 (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/gtczW_f_2E53Tg"
+  },
   "5613": {
     "ru": "https://disk.yandex.ru/d/umGDFvINiE3z4A",
     "name": "Need for Speed: Underground 2 (PlayStation 2)"
@@ -944,6 +958,10 @@
     "ru": "https://disk.yandex.ru/d/Rzzh3AfjdOarMg",
     "name": "Resident Evil Outbreak: File #2 (PlayStation 2)"
   },
+  "6049": {
+    "name": "Super Mario Sunshine (GameCube)",
+    "ru": "https://disk.yandex.ru/d/JYwHvpaVOdXYAw"
+  },
   "6311": {
     "ru": "https://disk.yandex.ru/d/zAFjGGt24l20KA",
     "name": "Onimusha: Warlords (PlayStation 2)"
@@ -957,6 +975,10 @@
   "6371": {
     "ru": "https://disk.yandex.ru/d/PaBQ-IoAYtQNTQ",
     "name": "Dead Head Fred (PlayStation Portable)"
+  },
+  "6726": {
+    "name": "The Adventures of Lomax (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/AJaaGktWG2B9Cw"
   },
   "6870": {
     "drive": "https://drive.google.com/drive/folders/1Fa5XViDxgiKTYELtHD-UdXgHxvHy60ql",
@@ -1028,6 +1050,10 @@
     "drive": "https://drive.google.com/drive/folders/1RTLb_8tfLKVfX9v9lpz5v4rwNMtPuk45",
     "name": "~Homebrew~ ~Demo~ Resident Evil (Game Boy)"
   },
+  "9875": {
+    "name": "Mortal Kombat: Special Forces (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/zL2SOEz9_SKSfg"
+  },
   "9999": {
     "ru": "https://disk.yandex.ru/d/tKJ6jj9y2D7IiA",
     "status": "mastering",
@@ -1083,6 +1109,10 @@
     "drive": "https://drive.google.com/drive/folders/1wREXtAbf_0RPXjciqxv1m0AxDMwLEy9_",
     "ru": "https://disk.yandex.ru/d/C5rOrj0jUtVOyw",
     "name": "Resident Evil 2: DualShock Ver. (PlayStation)"
+  },
+  "11249": {
+    "name": "Valkyrie Profile (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/riaceTPRjR2scQ"
   },
   "11265": {
     "drive": "https://drive.google.com/drive/folders/1IlDYKD9mqGg_qAYnZVfXQo4U3878x-9R",
@@ -1195,9 +1225,17 @@
     "ru": "https://disk.yandex.ru/d/EoGRBbejF581xw",
     "name": "Prince of Persia: Rival Swords (PlayStation Portable)"
   },
+  "15625": {
+    "name": "Diver's Dream (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/SAsePfHOgxgBSg"
+  },
   "15626": {
     "ru": "https://disk.yandex.ru/d/EyoK6yKtkU_Brw",
     "name": "Gran Turismo: The Real Driving Simulator (PlayStation Portable)"
+  },
+  "15976": {
+    "name": "Red Asphalt (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/kPBtwh7M9Zi9Bw"
   },
   "16005": {
     "ru": "https://disk.yandex.ru/d/fwG02PhYEBTv6w",
@@ -1235,6 +1273,12 @@
     "status": "mastering",
     "comment": "Официальная поддержка",
     "name": "Time Hollow (Nintendo DS)"
+  },
+  "16699": {
+    "name": "Crossroad Crisis (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/YZeg7c4wZjjMKg",
+    "status": "mastering",
+    "comment": "Протестировал: [user=AULGGUS]"
   },
   "17454": {
     "drive": "https://drive.google.com/drive/folders/1sxUGJE4aU_e04D0iYoV0sDL3_ArxZ7xG",
@@ -1494,6 +1538,10 @@
   "19259": {
     "ru": "https://disk.yandex.ru/d/ta2ksHzDLL_yhw",
     "name": "Kuon (PlayStation 2)"
+  },
+  "19260": {
+    "name": "Legend of Kay (PlayStation 2)",
+    "ru": "https://disk.yandex.ru/d/sYKTMzxd2hOEKA"
   },
   "19261": {
     "ru": "https://disk.yandex.ru/d/T7WKCz3ZZLZbWQ",
