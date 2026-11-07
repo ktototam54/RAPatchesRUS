@@ -319,6 +319,10 @@
     "comment": "Официальная поддержка",
     "name": "The Lost Vikings (SNES/Super Famicom)"
   },
+  "1091": {
+    "name": "Runabout 2 (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/hQV4tuAkM7lgBQ"
+  },
   "1178": {
     "name": "Aladdin in Nasira's Revenge (PlayStation)",
     "ru": "https://disk.yandex.ru/d/rz_jwhsPTfttrg"
@@ -504,6 +508,10 @@
     "ru": "https://disk.yandex.ru/d/qzu-4cC-3vbeqw",
     "name": "Dawn of Mana (PlayStation 2)"
   },
+  "2712": {
+    "name": "Soviet Strike (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/hBgEhA11r1OK-w"
+  },
   "2726": {
     "ru": "https://disk.yandex.ru/d/AnhaCk1wbWGfOg",
     "status": "mastering",
@@ -611,6 +619,10 @@
   "3050": {
     "ru": "https://disk.yandex.ru/d/zRmFcs4bSLs5Ng",
     "name": "Gran Turismo 4: Prologue (PlayStation 2)"
+  },
+  "3051": {
+    "name": "Twisted Metal: Small Brawl (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/Ad-UfRMS_VMNdw"
   },
   "3057": {
     "ru": "https://disk.yandex.ru/d/3MMNsGGGh9gbZA",
@@ -789,6 +801,10 @@
     "ru": "https://disk.yandex.ru/d/HU__WUJQwpvdLA",
     "name": "Corpse Party (PlayStation Portable)"
   },
+  "3708": {
+    "name": "Star Wars: Dark Forces (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/m4M7HRWcyR6ASA"
+  },
   "3714": {
     "ru": "https://disk.yandex.ru/d/NKOktHoMnNTnVA",
     "status": "mastering",
@@ -932,6 +948,10 @@
     "ru": "https://disk.yandex.ru/d/VQ9dIugk-QxBrA",
     "comment": "Протестировал: [user=Shiorat]"
   },
+  "4587": {
+    "name": "Nuclear Strike (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/4GNCqu2ZgoQsJA"
+  },
   "4748": {
     "ru": "https://disk.yandex.ru/d/MjGlgyc9oxAUew",
     "status": "mastering",
@@ -1059,6 +1079,10 @@
     "ru": "https://disk.yandex.ru/d/zTVSc8NhV8zTMQ",
     "name": "Sonic Colors (Wii)"
   },
+  "7896": {
+    "name": "Nightmare Creatures (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/MZgiiRqMAhUr2w"
+  },
   "8148": {
     "name": "Armored Core: Master of Arena (PlayStation)",
     "ru": "https://disk.yandex.ru/d/TikTzBIHnG6Xpw"
@@ -1085,6 +1109,10 @@
     "comment": "Официальная поддержка",
     "name": "~Unlicensed~ Plants vs. Zombies (Genesis/Mega Drive)"
   },
+  "9007": {
+    "name": "Vanguard Bandits (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/ewo24ot-KZ1x5g"
+  },
   "9015": {
     "drive": "https://drive.google.com/drive/folders/1-1V1THsSwXsLJfGpl-UzpGW0fkqkHZVo",
     "ru": "https://disk.yandex.ru/d/9ZEGPwacxn3x6g",
@@ -1095,6 +1123,10 @@
   "9279": {
     "name": "Army Men 3D (PlayStation)",
     "ru": "https://disk.yandex.ru/d/kCMd_YY_NCgWIg"
+  },
+  "9282": {
+    "name": "Time Commando (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/zTxzNxx3LjgSQQ"
   },
   "9407": {
     "ru": "https://disk.yandex.ru/d/9lpJmx29hjQx3w",
@@ -1144,6 +1176,16 @@
     "name": "Crash Bandicoot 3: Warped (PlayStation)",
     "ru": "https://disk.yandex.ru/d/g3ZmPKprA44fgQ"
   },
+  "10434": {
+    "name": "Crash Bandicoot (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/RIqih10A1bRiig"
+  },
+  "10438": {
+    "name": "Crash Team Racing (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/mDVHVN7ivNgNjA",
+    "status": "mastering",
+    "comment": "Не работает только ачивка на Демо Спайро!~\nТак же в группе тг есть солянка хаков на эту игру с русской озвучкой"
+  },
   "10477": {
     "ru": "https://disk.yandex.ru/d/Zl-gC5GRXBYkdg",
     "name": "Daxter (PlayStation Portable)"
@@ -1156,10 +1198,18 @@
     "ru": "https://disk.yandex.ru/d/uUIPZE8JTc6Viw",
     "name": "Patapon (PlayStation Portable)"
   },
+  "10675": {
+    "name": "Syphon Filter (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/mrA_c5T-voUGxA"
+  },
   "10828": {
     "ru": "https://disk.yandex.ru/d/kI-vEJNY-8TBNw",
     "comment": "Игра потребует ввести эти данные\nSerial Number: 4E62F237 \nAccess Key: oWur4WJg",
     "name": "Phantasy Star Online Ver. 2 (Dreamcast)"
+  },
+  "10863": {
+    "name": "Test Drive 4 (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/2Ut-xrKPtyWClw"
   },
   "10907": {
     "name": "Crash Bash (PlayStation)",
@@ -1173,6 +1223,14 @@
     "ru": "https://disk.yandex.ru/d/grmFkdeZB1bSJw",
     "name": "Red Dead Revolver (PlayStation 2)"
   },
+  "11133": {
+    "name": "O.D.T.: Escape... Or Die Trying (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/c90x6xmvPSksMg"
+  },
+  "11147": {
+    "name": "Warcraft II: The Dark Saga (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/jI__IK4dwoYnCw"
+  },
   "11157": {
     "name": "Mary-Kate and Ashley: Crush Course (PlayStation)",
     "ru": "https://disk.yandex.ru/d/fBf3to3otXf_7g"
@@ -1184,6 +1242,10 @@
   "11242": {
     "name": "Final Fantasy VII (PlayStation)",
     "ru": "https://disk.yandex.ru/d/G9GnYvRB_W2b0Q"
+  },
+  "11244": {
+    "name": "Metal Gear Solid (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/0VVx-Td5BlnSdA"
   },
   "11245": {
     "drive": "https://drive.google.com/drive/folders/1wREXtAbf_0RPXjciqxv1m0AxDMwLEy9_",
@@ -1206,6 +1268,14 @@
     "name": "Lunar 2: Eternal Blue Complete (PlayStation)",
     "ru": "https://disk.yandex.ru/d/pW99tPeSAf6fYw"
   },
+  "11252": {
+    "name": "Silent Hill (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/mMV0yI0qPs2afQ"
+  },
+  "11260": {
+    "name": "Spyro 2: Ripto's Rage! (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/zbvp9uw1dA5V5w"
+  },
   "11264": {
     "name": "The Legend of Dragoon (PlayStation)",
     "ru": "https://disk.yandex.ru/d/ez2Gk_M69e9IBA"
@@ -1217,6 +1287,10 @@
     "comment": "Официальня поддержка",
     "name": "Resident Evil 3: Nemesis (PlayStation)"
   },
+  "11267": {
+    "name": "Spyro: Year of the Dragon (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/OhZrN3SLupmGyQ"
+  },
   "11268": {
     "drive": "https://drive.google.com/drive/folders/1wuVrP657OSZklYpEvHAfi8XuBA7-h-wp",
     "ru": "https://disk.yandex.ru/d/nJLNnvRzdC2raw",
@@ -1226,9 +1300,29 @@
     "name": "Final Fantasy VIII (PlayStation)",
     "ru": "https://disk.yandex.ru/d/G9GnYvRB_W2b0Q"
   },
+  "11276": {
+    "name": "Tomba! (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/E8qhWmWFXXenFw"
+  },
+  "11277": {
+    "name": "Parasite Eve (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/pC2DiO_fUZ-HDA"
+  },
+  "11279": {
+    "name": "Spyro the Dragon (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/kyit9_oU1vVWCQ"
+  },
+  "11285": {
+    "name": "Oddworld: Abe's Exoddus (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/aVyBgxIUZGj4mw"
+  },
   "11292": {
     "name": "Breath of Fire IV (PlayStation)",
     "ru": "https://disk.yandex.ru/d/_c8cRIeTAM_Omg"
+  },
+  "11293": {
+    "name": "Tenchu 2: Birth of the Stealth Assassins (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/yEzpI3aBDHONXg"
   },
   "11296": {
     "name": "Dino Crisis 2 (PlayStation)",
@@ -1240,9 +1334,25 @@
     "status": "mastering",
     "comment": "Протестировал: [user=SiriusIndigo]"
   },
+  "11300": {
+    "name": "Tenchu: Stealth Assassins (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/urkh5Bu91zj6tA"
+  },
+  "11311": {
+    "name": "Medal of Honor (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/1vlCvxLOpx_4sw"
+  },
+  "11317": {
+    "name": "MediEvil (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/4Ks5kKlNb-yBcg"
+  },
   "11318": {
     "name": "Dino Crisis (PlayStation)",
     "ru": "https://disk.yandex.ru/d/ZYelOIRSaydrXQ"
+  },
+  "11322": {
+    "name": "Metal Gear Solid: VR Missions (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/LNy_1oyClBqrQQ"
   },
   "11330": {
     "name": "Blood Omen: Legacy of Kain (PlayStation)",
@@ -1252,9 +1362,17 @@
     "name": "Final Fantasy Origins (PlayStation)",
     "ru": "https://disk.yandex.ru/d/8vpZYgtqZETaXQ"
   },
+  "11334": {
+    "name": "Rayman 2: The Great Escape (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/TfpkKT3mBxAZnA"
+  },
   "11336": {
     "name": "Alundra (PlayStation)",
     "ru": "https://disk.yandex.ru/d/DrtXudu9fB3bKA"
+  },
+  "11338": {
+    "name": "MediEvil II (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/unHS_05Lj8FkTw"
   },
   "11341": {
     "ru": "https://disk.yandex.ru/d/1Ml18gPXKX_znA",
@@ -1276,9 +1394,21 @@
     "ru": "https://disk.yandex.ru/d/K3iktijORUn0sA",
     "name": "Tomb Raider: The Last Revelation (PlayStation)"
   },
+  "11357": {
+    "name": "Toy Story 2: Buzz Lightyear to the Rescue! (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/QIWdP9uiiyYp_g"
+  },
   "11369": {
     "name": "Koudelka (PlayStation)",
     "ru": "https://disk.yandex.ru/d/yQ1RLOiRJKzWHQ"
+  },
+  "11371": {
+    "name": "Revelations: Persona (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/tVLfnZVkSzwudg"
+  },
+  "11372": {
+    "name": "Thousand Arms (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/DD2F7Q2J2hmmMg"
   },
   "11375": {
     "ru": "https://disk.yandex.ru/d/5KWmrw43RV6tXg",
@@ -1318,6 +1448,10 @@
     "name": "Alundra 2: A New Legend Begins (PlayStation)",
     "ru": "https://disk.yandex.ru/d/im6R72ewDPACYA"
   },
+  "11410": {
+    "name": "Star Wars - Episode I: Jedi Power Battles (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/BPjFsHk5JUe2Qg"
+  },
   "11417": {
     "name": "007: Tomorrow Never Dies (PlayStation)",
     "ru": "https://disk.yandex.ru/d/NU-e1NLYwXAmwA"
@@ -1327,6 +1461,10 @@
     "ru": "https://disk.yandex.ru/d/SEIDhf_8coI0dw",
     "name": "Resident Evil: Survivor (PlayStation)"
   },
+  "11420": {
+    "name": "Star Wars - Episode I: The Phantom Menace (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/q9X7jxrzc0Q22w"
+  },
   "11422": {
     "name": "Duke Nukem: Total Meltdown (PlayStation)",
     "ru": "https://disk.yandex.ru/d/-Tj1aST4wRcFYQ"
@@ -1335,9 +1473,17 @@
     "name": "Breakout (PlayStation)",
     "ru": "https://disk.yandex.ru/d/Q3G3W3LLH2Az1g"
   },
+  "11561": {
+    "name": "Road Rash: Jailbreak (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/b3pnXvf2cOZb5g"
+  },
   "11588": {
     "name": "Driver 2: The Wheelman Is Back (PlayStation)",
     "ru": "https://disk.yandex.ru/d/ljW6OSjOx6RD7g"
+  },
+  "11604": {
+    "name": "MDK (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/ZrNFamfxkqacgg"
   },
   "12746": {
     "name": "Clock Tower: Ghost Head (PlayStation)",
@@ -1361,6 +1507,14 @@
     "name": "Galerians (PlayStation)",
     "ru": "https://disk.yandex.ru/d/o5AIBCoYEYV-mg"
   },
+  "13899": {
+    "name": "Tom and Jerry in House Trap (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/-5U3nYxra-3DNg"
+  },
+  "13901": {
+    "name": "~Prototype~ Thrill Kill (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/l9qxMxJwRdrQFw"
+  },
   "13905": {
     "name": "Bubsy 3D: Furbitten Planet (PlayStation)",
     "ru": "https://disk.yandex.ru/d/LYDnA1A341lkCg",
@@ -1370,6 +1524,14 @@
   "13909": {
     "name": "Goofy's Fun House (PlayStation)",
     "ru": "https://disk.yandex.ru/d/YAOkvAkfgzh5uQ"
+  },
+  "13916": {
+    "name": "Skullmonkeys (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/2Z-wVG_Xbb3pvA"
+  },
+  "13964": {
+    "name": "The Grinch (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/QrBfGAsVH-ldnw"
   },
   "13968": {
     "name": "Dracula: The Resurrection (PlayStation)",
@@ -1394,10 +1556,10 @@
     "name": "~Hack~ Resident Evil 3: Dark Infection (PlayStation)"
   },
   "14457": {
+    "name": "Monsters, Inc. Scream Team (PlayStation)",
     "ru": "https://disk.yandex.ru/d/crqKkiLBSdCIEg",
     "status": "mastering",
-    "comment": "Протестировал: @vasa1907 (хз какой его ник в РА)",
-    "name": "Monsters, Inc. Scream Team (PlayStation)"
+    "comment": "Протестировал: [user=Polina]"
   },
   "14491": {
     "name": "Blade (PlayStation)",
@@ -1417,6 +1579,14 @@
     "ru": "https://disk.yandex.ru/d/g7m4i6R02rnCmA",
     "comment": "Только озвучка.\nСлучайно обнаружил: [user=AULGGUS]"
   },
+  "14629": {
+    "name": "Quake II (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/PZYwifJDe0OVmw"
+  },
+  "14630": {
+    "name": "SpongeBob SquarePants: SuperSponge (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/WleqExBH9PIMXA"
+  },
   "14631": {
     "name": "Jackie Chan Stuntmaster (PlayStation)",
     "ru": "https://disk.yandex.ru/d/dttOUSTLd1qTVA"
@@ -1434,6 +1604,10 @@
   "14662": {
     "ru": "https://disk.yandex.ru/d/WAIiP_sK6sKaLw",
     "name": "Valkyria Chronicles 2 (PlayStation Portable)"
+  },
+  "14691": {
+    "name": "World's Scariest Police Chases (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/7EaGBB5Fsm74Ng"
   },
   "14749": {
     "ru": "https://disk.yandex.ru/d/Vxkt2cD6-OfBXQ",
@@ -1478,6 +1652,10 @@
     "ru": "https://disk.yandex.ru/d/wZ5TaNLx8MbE2g",
     "comment": "Обязан пройти каждый 💎"
   },
+  "15934": {
+    "name": "NASCAR Rumble (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/pyAo1-xiKFL7rg"
+  },
   "15976": {
     "name": "Red Asphalt (PlayStation)",
     "ru": "https://disk.yandex.ru/d/kPBtwh7M9Zi9Bw"
@@ -1494,9 +1672,17 @@
     "drive": "https://drive.google.com/drive/folders/1ljUPvE9UCdYh4GeKBiGdVeLooKMro0OB",
     "name": "~Hack~ Resident Evil 3: The Only One (PlayStation)"
   },
+  "16192": {
+    "name": "Scooby-Doo and the Cyber Chase (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/OJMUpLMxNcjj8A"
+  },
   "16205": {
     "name": "Kingsley's Adventure (PlayStation)",
     "ru": "https://disk.yandex.ru/d/2TmFfGv548y1bw"
+  },
+  "16221": {
+    "name": "Stuart Little 2 (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/HUtKaB-s9Eiikg"
   },
   "16237": {
     "name": "Herc's Adventures (PlayStation)",
@@ -1529,19 +1715,35 @@
     "comment": "Официальная поддержка",
     "name": "~Unlicensed~ Adventures of the Gummi Bears (Genesis/Mega Drive)"
   },
+  "16526": {
+    "name": "Mort the Chicken (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/gm5elp19JOUfQw"
+  },
   "16556": {
     "name": "102 Dalmatians: Puppies to the Rescue (PlayStation)",
     "ru": "https://disk.yandex.ru/d/NCV7SAJ8m1rmYQ"
   },
+  "16559": {
+    "name": "Metal Gear Solid: Integral (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/bRV6etaRjfVr3w"
+  },
   "16563": {
     "name": "Broken Sword: The Shadow of the Templars (PlayStation)",
     "ru": "https://disk.yandex.ru/d/YA626ZI2BQungQ"
+  },
+  "16570": {
+    "name": "Martian Gothic: Unification (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/mGqT8iwlyx-HGw"
   },
   "16624": {
     "ru": "https://disk.yandex.ru/d/inrJCdiYzEPRlg",
     "status": "mastering",
     "comment": "Официальная поддержка",
     "name": "Time Hollow (Nintendo DS)"
+  },
+  "16671": {
+    "name": "Power Rangers: Time Force (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/gMLdJ02Btr5B3A"
   },
   "16686": {
     "name": "Lilo and Stitch (PlayStation)",
@@ -1555,13 +1757,41 @@
     "status": "mastering",
     "comment": "Протестировал: [user=AULGGUS]"
   },
+  "16721": {
+    "name": "Xena: Warrior Princess (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/wLj2Ypq-4swsBQ"
+  },
   "16988": {
     "name": "Danger Girl (PlayStation)",
     "ru": "https://disk.yandex.ru/d/fuaaBJvVWGc77A"
   },
+  "16992": {
+    "name": "Nightmare Creatures II (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/WO0nfWNPTxOPAQ"
+  },
+  "16994": {
+    "name": "Rayman: Brain Games (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/v2_5g7TILRryhQ"
+  },
+  "16995": {
+    "name": "Rayman Rush (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/WbjEt8STXN18wg"
+  },
+  "17074": {
+    "name": "Peter Pan: Return to Never Land (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/6zSZsjSpJJJIAg"
+  },
+  "17153": {
+    "name": "Pitfall 3D: Beyond the Jungle (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/7h2wPp9GvKI-0Q"
+  },
   "17309": {
     "name": "Harry Potter and the Chamber of Secrets (PlayStation)",
     "ru": "https://disk.yandex.ru/d/PiG1wGnkwH2Bqw"
+  },
+  "17333": {
+    "name": "The Mummy (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/_8C7ltAArmB2RQ"
   },
   "17341": {
     "name": "Mary-Kate and Ashley: Magical Mystery Mall (PlayStation)",
@@ -1589,13 +1819,29 @@
     "name": "Broken Sword II: The Smoking Mirror (PlayStation)",
     "ru": "https://disk.yandex.ru/d/MtAXYCNsMR2Zug"
   },
+  "17769": {
+    "name": "Tintin: Destination Adventure (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/nh2P720Z9K7rkQ"
+  },
+  "17848": {
+    "name": "Men in Black: The Series - Crashdown (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/anjdAahoGITgkA"
+  },
   "17926": {
     "drive": "https://drive.google.com/drive/folders/1U5vD9tFFlHF35o4UOPMKoupsyhKMUaIy",
     "name": "~Hack~ Resident Evil 1.5: Battle Coliseum (PlayStation)"
   },
+  "17969": {
+    "name": "Warriors of Might and Magic (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/dd_W5senO7kBTA"
+  },
   "17976": {
     "ru": "https://disk.yandex.ru/d/3Ua6byH1PPLRXg",
     "name": "Monster Hunter Portable 3rd (PlayStation Portable)"
+  },
+  "17981": {
+    "name": "The Sniper (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/lEeiSvJpD_RV-w"
   },
   "18002": {
     "ru": "https://disk.yandex.ru/d/pjBgaQIzUYx03A",
@@ -1610,6 +1856,10 @@
   "18046": {
     "name": "Power Shovel (PlayStation)",
     "ru": "https://disk.yandex.ru/d/T3gONXhRhx2Lvw"
+  },
+  "18059": {
+    "name": "The Guardian of Darkness (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/VzYCVZfs99fF5g"
   },
   "18072": {
     "ru": "https://disk.yandex.ru/d/2GtLrnbfBbCEeA",
@@ -1891,6 +2141,10 @@
     "status": "mastering",
     "comment": "Протестировал: [user=SiriusIndigo]",
     "name": "ObsCure: The Aftermath (PlayStation 2)"
+  },
+  "19276": {
+    "name": "The Note (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/ch-vGtkksp8wtQ"
   },
   "19284": {
     "ru": "https://disk.yandex.ru/d/2jRJFQOrL7s3og",
@@ -2354,8 +2608,8 @@
     "name": "Naruto: Ultimate Ninja (PlayStation 2)"
   },
   "21455": {
-    "ru": "https://disk.yandex.ru/d/w4p-xl8TIqpVCQ",
-    "name": "Who Wants to Be a Millionaire: 2nd Edition (PlayStation)"
+    "name": "Who Wants to Be a Millionaire: 2nd Edition (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/w4p-xl8TIqpVCQ"
   },
   "21461": {
     "name": "Dora the Explorer: Barnyard Buddies (PlayStation)",
@@ -2522,6 +2776,10 @@
     "ru": "https://disk.yandex.ru/d/CBwDLrhbldNUYw",
     "name": "Treasure Planet (PlayStation 2)"
   },
+  "24158": {
+    "name": "Tiny Toon Adventures: Plucky's Big Adventure (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/iFNlt12pH8b9vA"
+  },
   "24419": {
     "ru": "https://disk.yandex.ru/d/w5FlDtybuEZsMQ",
     "name": "Initial D: Special Stage (PlayStation 2)"
@@ -2591,6 +2849,10 @@
   "26386": {
     "ru": "https://disk.yandex.ru/d/Qn2GsFS1VFiR4g",
     "name": "Who Wants to Be a Millionaire: Junior (PlayStation)"
+  },
+  "26565": {
+    "name": "Necronomicon: The Dawning of Darkness (PlayStation)",
+    "ru": "https://disk.yandex.ru/d/sEHo5xu6ruMr9Q"
   },
   "26666": {
     "name": "Langrisser IV & V (PlayStation)",
@@ -2722,8 +2984,9 @@
     "name": "~Hack~ Resident Evil 4: The Xfile Edition (PlayStation 2)"
   },
   "41274": {
+    "name": "~Hack~ Resident Evil 3: Hard Mode (PlayStation)",
     "drive": "https://drive.google.com/drive/folders/11Xd5FJIStvosR3p7qpJXXbioj9jRyyTH",
-    "name": "~Hack~ Resident Evil 3: Hard Mode (PlayStation)"
+    "ru": "https://disk.yandex.ru/d/poWKA67Gp5vs5g"
   },
   "44031": {
     "name": "Ragnarok Online (Standalone)",
