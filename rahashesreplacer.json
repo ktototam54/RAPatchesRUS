@@ -488,6 +488,10 @@
     "ru": "https://disk.yandex.ru/d/7yruvGuTHWJzIg",
     "name": "Suikoden IV (PlayStation 2)"
   },
+  "2664": {
+    "name": "God Hand (PlayStation 2)",
+    "ru": "https://disk.yandex.ru/d/8AkjCBKtuheCnA"
+  },
   "2666": {
     "ru": "https://disk.yandex.ru/d/fW6oXhC5HKzWtQ",
     "name": "Odin Sphere (PlayStation 2)"
@@ -517,6 +521,10 @@
     "status": "mastering",
     "comment": "Протестировал: [user=SiriusIndigo]",
     "name": "Fatal Frame III: The Tormented (PlayStation 2)"
+  },
+  "2735": {
+    "name": "One Piece: Romance Dawn - Bouken no Yoake (PlayStation Portable)",
+    "ru": "https://disk.yandex.ru/d/7kE_ymc8nGYrwQ"
   },
   "2738": {
     "ru": "https://disk.yandex.ru/d/LxVjLE203fx4sw",
@@ -1178,7 +1186,9 @@
   },
   "10434": {
     "name": "Crash Bandicoot (PlayStation)",
-    "ru": "https://disk.yandex.ru/d/RIqih10A1bRiig"
+    "ru": "https://disk.yandex.ru/d/RIqih10A1bRiig",
+    "status": "mastering",
+    "comment": "Протестировал: [user=Sianor]"
   },
   "10438": {
     "name": "Crash Team Racing (PlayStation)",
@@ -2640,8 +2650,10 @@
     "name": "~Unlicensed~ Angry Birds Star Wars (Genesis/Mega Drive)"
   },
   "21526": {
+    "name": "Syberia (PlayStation 2)",
     "ru": "https://disk.yandex.ru/d/mFB01H3Oaw079g",
-    "name": "Syberia (PlayStation 2)"
+    "status": "mastering",
+    "comment": "Протестировал: [user=bestrigyn1]"
   },
   "21561": {
     "ru": "https://disk.yandex.ru/d/4UzUNNejSXU5Kg",
