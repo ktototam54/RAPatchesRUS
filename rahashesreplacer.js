@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      9.1
+// @version      9.2
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'. Статусы, комментарии, ссылки на ачивки. UI в стиле базы данных. Название игры подтягивается с RA API.
 // @author       You
 // @match        https://retroachievements.org/*
@@ -254,6 +254,53 @@
         return null;
     }
 
+    // Ищем кнопку "Want to Play" независимо от языка интерфейса
+    function findWantToPlayButton(gameId) {
+        // 1) По href — самый надёжный, не зависит от языка
+        const hrefSelectors = [
+            'a[href*="/want-to-play"]',
+            'a[href*="/wanttoplay"]',
+            'a[href*="/want_to_play"]'
+        ];
+        for (let i = 0; i < hrefSelectors.length; i++) {
+            const el = document.querySelector(hrefSelectors[i]);
+            if (el && !el.closest('.dropdown-menu, [role="menu"], [hidden], [aria-hidden="true"]')) {
+                return el;
+            }
+        }
+
+        // 2) По data-атрибутам / wire:click, которые RA вешает на кнопку
+        const dataSelectors = [
+            '[data-toggle="want-to-play"]',
+            '[data-want-to-play]',
+            '[data-action*="want"]',
+            'button[data-action*="want"]',
+            'a[data-action*="want"]',
+            '[wire\\:click*="wantToPlay"]',
+            '[wire\\:click*="toggleWantToPlay"]',
+            '[wire\\:click*="WantToPlay"]'
+        ];
+        for (let i = 0; i < dataSelectors.length; i++) {
+            const el = document.querySelector(dataSelectors[i]);
+            if (el && !el.closest('.dropdown-menu, [role="menu"], [hidden], [aria-hidden="true"]')) {
+                return el;
+            }
+        }
+
+        // 3) Фолбэк — по тексту на разных языках
+        const texts = [
+            'want to play', 'хочу сыграть', 'хочу играть',
+            'will spielen', 'je veux jouer', 'quiero jugar',
+            'voglio giocare', 'quero jogar', 'chcę zagrać',
+            'quer jogar', 'vill spela', 'vil spille'
+        ];
+        for (let i = 0; i < texts.length; i++) {
+            const el = findButtonByText(texts[i]);
+            if (el) return el;
+        }
+        return null;
+    }
+
     function setTextContent(root, text) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         let node;
@@ -274,7 +321,7 @@
         if (!entry || !entry.status || !STATUS_META[entry.status]) return;
         if (document.querySelector('[data-ra-status-badge="1"]')) return;
 
-        const wantToPlay = findButtonByText('Want to Play');
+        const wantToPlay = findWantToPlayButton(gameId);
         if (!wantToPlay) return;
 
         const meta = STATUS_META[entry.status];
@@ -282,6 +329,9 @@
         badge.dataset.raStatusBadge = '1';
         badge.removeAttribute('href');
         badge.removeAttribute('id');
+        badge.removeAttribute('wire:click');
+        badge.removeAttribute('data-action');
+        badge.removeAttribute('data-toggle');
         badge.style.cursor = 'default';
         badge.style.pointerEvents = 'none';
         badge.style.color = meta.color;
