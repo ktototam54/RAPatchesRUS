@@ -1865,7 +1865,7 @@
             const drag = document.createElement('span'); drag.className = 'drag'; drag.textContent = '☰';
             const icon = document.createElement('span'); icon.className = 'ach-icon'; icon.textContent = '🏆';
             const idS = document.createElement('span'); idS.className = 'ach-id'; idS.textContent = p.id;
-            const title = document.createElement('span'); title.className = 'ach-title'; title.textContent = p.title || '⏳ Загрузка названия...';
+            const title = document.createElement('span'); title.className = 'ach-title'; title.textContent = p.title || ('Ачивка #' + p.id);
             const sel = document.createElement('select');
             PLAN_MINUTES.forEach(function (m) {
                 const o = document.createElement('option');
@@ -1924,7 +1924,7 @@
         unlockerSetConfig(cfg);
     }
 
-        function unlockerLoadPlanFromConfig(cfg) {
+            function unlockerLoadPlanFromConfig(cfg) {
         const src = cfg.plan || [];
         unlockerPlan = src.map(function (p) {
             return {
@@ -1935,20 +1935,13 @@
             };
         });
         unlockerRenderPlan();
-        // Подтягиваем названия асинхронно для тех, у кого title пустой
-        unlockerPlan.forEach(function (p) {
-            if (p.title) return;
-            fetchAchievementInfo(p.id).then(function (info) {
-                p.title = info.full;
-                unlockerRenderPlan();
-                unlockerSavePlanToConfig();
-            }).catch(function () {});
-        });
+        // Подтянуть названия для тех, у кого пусто
+        const noTitle = unlockerPlan.filter(function (p) { return !p.title; }).map(function (p) { return p.id; });
+        if (noTitle.length) enqueueTitleFetch(noTitle);
     }
 
-      // ==== PARSER: GAME PAGE ACHIEVEMENTS ====
-    // Собирает {id, title} со страницы /game/ID.
-    // Ищет ссылки на /achievement/ID и пытается вытащить заголовок из ближайшей карточки.
+    // ==== PARSER: GAME PAGE ACHIEVEMENTS ====
+    // Собирает ID ачивок со страницы /game/ID. Названия подтянем через API.
     function parseAchievementsFromGamePage() {
         if (!/^\/game\/\d+/.test(window.location.pathname)) return [];
         const out = [];
@@ -1960,29 +1953,44 @@
             const id = m[1];
             if (seen[id]) return;
             seen[id] = true;
-            let title = '';
-            // 1) Сам текст ссылки (если это название, а не иконка)
-            const linkText = (a.textContent || '').replace(/\s+/g, ' ').trim();
-            if (linkText && linkText.length > 2 && !/^\d+$/.test(linkText)) title = linkText;
-            // 2) Ближайшая карточка с заголовком
-            if (!title) {
-                const card = a.closest('li, article, div[class*="achievement"], div[class*="achievement-list"] > *');
-                if (card) {
-                    const titleEl = card.querySelector('[class*="title"], h3, h4, strong, b');
-                    if (titleEl) {
-                        const t = (titleEl.textContent || '').replace(/\s+/g, ' ').trim();
-                        if (t && !/^\d+$/.test(t)) title = t;
-                    }
-                }
-            }
-            // 3) aria-label / title атрибут
-            if (!title) {
-                const al = a.getAttribute('aria-label') || a.getAttribute('title') || '';
-                if (al) title = al.trim();
-            }
-            out.push({ id: id, title: title });
+            out.push({ id: id, title: '' });
         });
         return out;
+    }
+
+    let titleFetchQueue = [];
+    let titleFetchActive = 0;
+    const TITLE_FETCH_PARALLEL = 5;
+
+    function enqueueTitleFetch(ids) {
+        ids.forEach(function (id) {
+            const p = unlockerPlan.find(function (x) { return x.id === String(id); });
+            if (p && p.title) return; // уже есть
+            if (titleFetchQueue.indexOf(String(id)) !== -1) return;
+            titleFetchQueue.push(String(id));
+        });
+        pumpTitleFetch();
+    }
+
+    function pumpTitleFetch() {
+        while (titleFetchActive < TITLE_FETCH_PARALLEL && titleFetchQueue.length > 0) {
+            const id = titleFetchQueue.shift();
+            titleFetchActive++;
+            fetchAchievementInfo(id).then(function (info) {
+                const p = unlockerPlan.find(function (x) { return x.id === id; });
+                if (p) {
+                    p.title = info.full || ('Ачивка #' + id);
+                    unlockerRenderPlan();
+                    unlockerSavePlanToConfig();
+                }
+            }).catch(function () {
+                const p = unlockerPlan.find(function (x) { return x.id === id; });
+                if (p && !p.title) { p.title = 'Ачивка #' + id; unlockerRenderPlan(); }
+            }).then(function () {
+                titleFetchActive--;
+                pumpTitleFetch();
+            });
+        }
     }
 
     function bindUnlockerUI() {
@@ -2018,63 +2026,49 @@
                     unlockerSetToken('', '');
                     usetStatus('Токен очищен', '');
                 }
-              else if (act === 'plan-parse-page') {
+                              else if (act === 'plan-parse-page') {
                     const parsed = parseAchievementsFromGamePage();
                     if (!parsed.length) {
                         toast('На этой странице нет ачивок (откройте /game/ID)', 'err');
                         return;
                     }
                     let added = 0;
+                    const newIds = [];
                     parsed.forEach(function (a) {
                         if (unlockerPlan.find(function (p) { return p.id === a.id; })) return;
                         unlockerPlan.push({
                             id: a.id,
-                            title: a.title || '',
+                            title: '',
                             minutes: 5,
                             done: false, startedAt: null, finishedAt: null
                         });
+                        newIds.push(a.id);
                         added++;
                     });
                     unlockerRenderPlan();
                     unlockerSavePlanToConfig();
-                    // Подтянуть названия, если со страницы не удалось
-                    unlockerPlan.forEach(function (p) {
-                        if (p.title) return;
-                        fetchAchievementInfo(p.id).then(function (info) {
-                            p.title = info.full;
-                            unlockerRenderPlan();
-                            unlockerSavePlanToConfig();
-                        }).catch(function () {});
-                    });
+                    // Подтянуть названия пакетно
+                    if (newIds.length) enqueueTitleFetch(newIds);
                     toast('Добавлено в план: ' + added + ' (всего: ' + unlockerPlan.length + ')');
                 }
-                else if (act === 'plan-add-ach') {
+                  else if (act === 'plan-add-ach') {
                     const raw = prompt('ID ачивки (можно несколько через запятую):', '');
                     if (!raw) return;
                     const ids = raw.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return /^\d+$/.test(s); });
                     if (!ids.length) { toast('Введите числовые ID', 'err'); return; }
+                    const newIds = [];
                     ids.forEach(function (id) {
                         if (unlockerPlan.find(function (p) { return p.id === id; })) return;
-                        const entry = ACHS[id] || {};
                         unlockerPlan.push({
-                            id: id, title: entry.title || ('Ачивка #' + id),
-                            minutes: entry.minutes || 5,
+                            id: id, title: '',
+                            minutes: 5,
                             done: false, startedAt: null, finishedAt: null
                         });
-                        if (!entry.title) {
-                            fetchAchievementInfo(id).then(function (info) {
-                                const p = unlockerPlan.find(function (x) { return x.id === id; });
-                                if (p) { p.title = info.full; unlockerRenderPlan(); }
-                                if (!ACHS[id]) ACHS[id] = {};
-                                ACHS[id].title = info.full;
-                                ACHS[id].link = 'https://retroachievements.org/achievement/' + id;
-                                if (!ACHS[id].minutes) ACHS[id].minutes = 5;
-                                GM_setValue(STORAGE_ACHS, JSON.stringify(ACHS));
-                                renderAchTable();
-                            }).catch(function () {});
-                        }
+                        newIds.push(id);
                     });
-                    unlockerRenderPlan(); unlockerSavePlanToConfig();
+                    unlockerRenderPlan();
+                    unlockerSavePlanToConfig();
+                    if (newIds.length) enqueueTitleFetch(newIds);
                 }
                 else if (act === 'plan-clear') {
                     if (!confirm('Очистить план?')) return;
