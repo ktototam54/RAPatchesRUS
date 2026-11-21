@@ -203,7 +203,6 @@
                     unlockerLoadPlanFromConfig(unlockerGetConfig());
                 }
             } catch (e) {}
-            toast('Достижения получены: ' + Object.keys(parsed).length + ' записей');
         }).catch(function (err) { toast('Ошибка: ' + err.message, 'err'); throw err; });
     }
 
