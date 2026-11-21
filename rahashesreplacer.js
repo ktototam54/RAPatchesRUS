@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
-// @version      11.0
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
+// @version      11.2
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -19,6 +19,23 @@
 (function () {
     'use strict';
 
+    // ============================================================
+    // КАРТА МОДУЛЕЙ (ищите по заголовкам ==== MODULE: ... ====)
+    // ------------------------------------------------------------
+    // CONFIG & CONSTANTS           — URL, storage, глобальные переменные
+    // API RA (READ-ONLY)           — fetchGameInfo, fetchAchievementInfo
+    // DATA: GAMES / ACHS           — загрузка, кэш
+    // GAME PAGE REPLACER           — applyReplacements / StatusBadge / Comment
+    // UI GAMES (Ctrl+Shift+E)      — таблица, фильтры, редактирование
+    // UI ACHS  (Ctrl+Shift+X)      — таблица ачивок
+    // ACH PAGE UNLOCK BUTTON       — кнопка "Активировать" + мини-модалка
+    // UNLOCKER ENGINE              — login2, gameid, patch, unlocks, startsession, ping, award
+    // UNLOCKER PLAN UI (Ctrl+Shift+U) — план с drag&drop и селектором минут
+    // MODALS & TOASTS              — общие модалки
+    // BOOTSTRAP                    — монтирование, hotkeys, observer, tick
+    // ============================================================
+
+    // ==== MODULE: CONFIG & CONSTANTS ====
     const REMOTE_GAMES_URL  = 'https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/rahashesreplacer.json';
     const REMOTE_ACHS_URL   = 'https://raw.githubusercontent.com/ktototam54/RAPatchesRUS/refs/heads/main/raachievements.json';
     const STORAGE_GAMES     = 'ra_hashes_replacer_data';
@@ -26,7 +43,6 @@
     const DOWNLOAD_TEXT = 'Download Game';
     const RU_TEXT = 'Русская версия';
 
-    // ---------- Unlocker ----------
     const STORAGE_UNLOCK_CFG = 'ra_unlocker_config';
     const STORAGE_UNLOCK_TOKEN = 'ra_unlocker_token';
     const STORAGE_UNLOCK_TOKEN_USER = 'ra_unlocker_token_user';
@@ -39,21 +55,15 @@
     let unlockerStop = false;
     let unlockerLogLines = [];
 
-    // Служебные данные
     const APP_CFG_A = 'U2lhbm9y';
     const APP_CFG_B = 'NDAxbHpRcWxjRFJvQ3ZjNFFXYXJTbzFNbEFHZm5UTEI=';
+    function decodeCfg(str) { try { return atob(str); } catch (e) { return ''; } }
 
-    function decodeCfg(str) {
-        try { return atob(str); } catch (e) { return ''; }
-    }
-
-    // ---------- Данные игр ----------
     const STATUS_META = {
         mastering:     { text: 'Мастеринг',         color: '#f4a900', bg: 'rgba(244,169,0,0.15)',   border: '#f4a900' },
         beaten:        { text: 'Битен',             color: '#c8c8c8', bg: 'rgba(200,200,200,0.15)', border: '#c8c8c8' },
         ru_impossible: { text: 'Ру ром невозможен', color: '#c084fc', bg: 'rgba(192,132,252,0.15)', border: '#c084fc' }
     };
-
     const STATUS_OPTIONS = [
         { value: '',              label: '—' },
         { value: 'mastering',     label: 'Мастеринг' },
@@ -80,7 +90,6 @@
     let filterGameDrive = false;
     let filterGameRu = false;
     let filterGameComment = false;
-
     let filterAchText = '';
 
     function getCurrentGameId() {
@@ -95,8 +104,7 @@
     function gmFetch(url) {
         return new Promise(function (resolve, reject) {
             GM_xmlhttpRequest({
-                method: 'GET',
-                url: url,
+                method: 'GET', url: url,
                 onload: function (res) {
                     if (res.status >= 200 && res.status < 300) resolve(res.responseText);
                     else reject(new Error('HTTP ' + res.status));
@@ -108,7 +116,7 @@
         });
     }
 
-    // ---------- API ----------
+    // ==== MODULE: API RA (READ-ONLY) ====
     function fetchGameInfo(gameId) {
         const u = decodeCfg(APP_CFG_A);
         const k = decodeCfg(APP_CFG_B);
@@ -136,17 +144,14 @@
             try { data = JSON.parse(text); } catch (e) { throw new Error('RA API вернул не JSON'); }
             if (data.error || data.message) throw new Error(data.message || 'ошибка RA API');
             return {
-                title: data.Title || '',
-                description: data.Description || '',
-                points: data.Points || 0,
-                full: data.Title || ('Ачивка #' + achId)
+                title: data.Title || '', description: data.Description || '',
+                points: data.Points || 0, full: data.Title || ('Ачивка #' + achId)
             };
         });
     }
 
-    // ---------- Тосты ----------
-    let toastEl = null;
-    let toastTimer = null;
+    // ==== MODULE: TOASTS ====
+    let toastEl = null, toastTimer = null;
     function toast(msg, type) {
         if (!toastEl) {
             toastEl = document.createElement('div');
@@ -162,7 +167,7 @@
         toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 3000);
     }
 
-    // ---------- Загрузка данных ----------
+    // ==== MODULE: DATA GAMES / ACHS ====
     function fetchGames() {
         toast('Загрузка игр...', 'info');
         return gmFetch(REMOTE_GAMES_URL).then(function (text) {
@@ -192,17 +197,21 @@
             refreshAchievementPageUI();
             renderAchTable();
             renderAchDetails();
+            // Синхронизация плана Unlocker с новыми данными
+            try {
+                if (typeof unlockerLoadPlanFromConfig === 'function') {
+                    unlockerLoadPlanFromConfig(unlockerGetConfig());
+                }
+            } catch (e) {}
             toast('Достижения получены: ' + Object.keys(parsed).length + ' записей');
         }).catch(function (err) { toast('Ошибка: ' + err.message, 'err'); throw err; });
     }
 
-    // ---------- Вставка блоков на страницу игры ----------
+    // ==== MODULE: GAME PAGE REPLACER ====
     function findTextNode(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         let node;
-        while ((node = walker.nextNode())) {
-            if (node.textContent.trim().length > 0) return node;
-        }
+        while ((node = walker.nextNode())) if (node.textContent.trim().length > 0) return node;
         return null;
     }
     function removeCounterBadge(root) {
@@ -223,8 +232,7 @@
         const entry = GAME_ID_TO_URL[gameId];
         if (!entry || (!entry.drive && !entry.ru)) return;
 
-        const links = document.querySelectorAll('a[href*="/hashes"]');
-        links.forEach(function (original) {
+        document.querySelectorAll('a[href*="/hashes"]').forEach(function (original) {
             if (original.dataset.raReplaced === '1') return;
             const href = original.getAttribute('href') || '';
             if (!href.includes('/game/' + gameId + '/hashes')) return;
@@ -238,13 +246,11 @@
                 if (textNode) textNode.textContent = DOWNLOAD_TEXT;
                 bindClick(original, entry.drive);
                 original.dataset.raReplaced = '1';
-
                 if (entry.ru) {
                     if (original.nextElementSibling && original.nextElementSibling.dataset.raRu === '1') return;
                     const clone = original.cloneNode(true);
                     removeCounterBadge(clone);
-                    clone.dataset.raRu = '1';
-                    clone.dataset.raReplaced = '1';
+                    clone.dataset.raRu = '1'; clone.dataset.raReplaced = '1';
                     clone.setAttribute('href', entry.ru);
                     clone.setAttribute('target', '_blank');
                     clone.setAttribute('rel', 'noopener noreferrer');
@@ -255,7 +261,6 @@
                 }
                 return;
             }
-
             if (entry.ru) {
                 original.setAttribute('href', entry.ru);
                 original.setAttribute('target', '_blank');
@@ -309,25 +314,25 @@
         if (!entry || !entry.status || !STATUS_META[entry.status]) return;
         if (document.querySelector('[data-ra-status-badge="1"]')) return;
 
-        const wantToPlay = findButtonByText('Want to Play');
+        // EN + RU варианты
+        const wantToPlay =
+            findButtonByText('Want to Play') ||
+            findButtonByText('Want to play') ||
+            findButtonByText('Хочу сыграть') ||
+            findButtonByText('Хочу играть');
         if (!wantToPlay) return;
 
         const meta = STATUS_META[entry.status];
         const badge = wantToPlay.cloneNode(true);
         badge.dataset.raStatusBadge = '1';
-        badge.removeAttribute('href');
-        badge.removeAttribute('id');
-        badge.style.cursor = 'default';
-        badge.style.pointerEvents = 'none';
-        badge.style.color = meta.color;
-        badge.style.borderColor = meta.border;
-        badge.style.background = meta.bg;
+        badge.removeAttribute('href'); badge.removeAttribute('id');
+        badge.style.cursor = 'default'; badge.style.pointerEvents = 'none';
+        badge.style.color = meta.color; badge.style.borderColor = meta.border; badge.style.background = meta.bg;
         badge.querySelectorAll('svg').forEach(function (el) { el.remove(); });
         badge.querySelectorAll('img').forEach(function (el) { el.remove(); });
         badge.textContent = '';
         const txt = document.createElement('span');
-        txt.textContent = meta.text;
-        txt.style.color = meta.color;
+        txt.textContent = meta.text; txt.style.color = meta.color;
         badge.appendChild(txt);
         wantToPlay.insertAdjacentElement('beforebegin', badge);
         const parent = wantToPlay.parentElement;
@@ -342,8 +347,7 @@
         const nodes = document.querySelectorAll('h1, h2, h3, h4, h5, div, span, p, section, article');
         for (let i = 0; i < nodes.length; i++) {
             const el = nodes[i];
-            const t = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-            if (t === target) return el;
+            if ((el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase() === target) return el;
         }
         return null;
     }
@@ -390,8 +394,7 @@
         block.className = 'ra-game-comment';
         block.dataset.raComment = '1';
         const label = document.createElement('span');
-        label.className = 'ra-game-comment-label';
-        label.textContent = 'Комментарий';
+        label.className = 'ra-game-comment-label'; label.textContent = 'Комментарий';
         const text = document.createElement('div');
         text.className = 'ra-game-comment-text';
         renderCommentText(text, entry.comment);
@@ -408,16 +411,13 @@
                 if (!first) continue;
                 const cls = (first.className || '').toString();
                 if (cls.indexOf('-mb-3 flex w-full items-center gap-4') !== -1) {
-                    first.insertAdjacentElement('beforebegin', block);
-                    return;
+                    first.insertAdjacentElement('beforebegin', block); return;
                 }
             }
         }
         let shots = null;
         const candidates = document.querySelectorAll('div[class*="grid-cols-2"]');
-        for (let i = 0; i < candidates.length; i++) {
-            if (candidates[i].querySelector('img')) { shots = candidates[i]; break; }
-        }
+        for (let i = 0; i < candidates.length; i++) if (candidates[i].querySelector('img')) { shots = candidates[i]; break; }
         if (shots) { shots.insertAdjacentElement('afterend', block); return; }
         if (baseSet) {
             let el = baseSet;
@@ -437,45 +437,9 @@
         document.querySelectorAll('a[data-ra-ru="1"]').forEach(function (a) { a.remove(); });
         document.querySelectorAll('[data-ra-status-badge="1"]').forEach(function (el) { el.remove(); });
         document.querySelectorAll('[data-ra-comment="1"]').forEach(function (el) { el.remove(); });
-        applyReplacements();
-        applyStatusBadge();
-        applyComment();
+        applyReplacements(); applyStatusBadge(); applyComment();
     }
-    // ---------- Кнопка «Разблокировать» на странице ачивки ----------
-    function applyAchievementUnlockButton() {
-        const achId = getCurrentAchievementId();
-        if (!achId) return;
-        const resetBtn = findButtonByText('Reset progress');
-        if (!resetBtn) return;
-        if (resetBtn.previousElementSibling && resetBtn.previousElementSibling.dataset.raUnlockBtn === '1') return;
-
-        const btn = document.createElement('button');
-        btn.dataset.raUnlockBtn = '1';
-        btn.textContent = '🔓 Разблокировать';
-        btn.style.background = '#1a7f37';
-        btn.style.color = '#fff';
-        btn.style.border = '1px solid #2ea043';
-        btn.style.borderRadius = '6px';
-        btn.style.padding = '4px 12px';
-        btn.style.fontWeight = '600';
-        btn.style.fontSize = '13px';
-        btn.style.cursor = 'pointer';
-        btn.style.marginRight = '8px';
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            openUnlockerForAchievement(achId);
-        });
-
-        resetBtn.parentElement.insertBefore(btn, resetBtn);
-    }
-
-    function refreshAchievementPageUI() {
-        document.querySelectorAll('[data-ra-unlock-btn="1"]').forEach(function (el) { el.remove(); });
-        applyAchievementUnlockButton();
-    }
-
-    // ---------- CSS ----------
+    // ==== MODULE: CSS ====
     const CSS = [
         '.ra-game-comment { margin: 12px 0; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-left: 3px solid #4a90d9; border-radius: 6px; color: #d0d0d0; font-size: 14px; line-height: 1.6; word-break: break-word; }',
         '.ra-game-comment .ra-game-comment-label { display: block; font-size: 11px; color: #4a90d9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }',
@@ -493,15 +457,15 @@
         '.raru-panel .db-title::before { content: "🗃"; }',
         '.raru-panel.games .db-title::before { content: "🎮"; }',
         '.raru-panel.achs .db-title::before { content: "🏆"; }',
-        '.raru-panel.unlocker { width: 640px; height: auto; max-height: 90vh; }',
+        '.raru-panel.unlocker { width: 520px; height: auto; max-height: 82vh; }',
         '.raru-panel.unlocker .db-title::before { content: "🔓"; }',
-        '.raru-panel .unlocker-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }',
-        '.raru-panel .unlocker-section { border: 1px solid #40444b; border-radius: 6px; padding: 10px; background: #2c2f33; display: flex; flex-direction: column; gap: 8px; }',
+        '.raru-panel .unlocker-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: calc(82vh - 40px); overflow-y: auto; }',
+        '.raru-panel .unlocker-section { border: 1px solid #40444b; border-radius: 6px; padding: 8px; background: #2c2f33; display: flex; flex-direction: column; gap: 6px; }',
         '.raru-panel .unlocker-section-title { color: #f4a900; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }',
         '.raru-panel .unlocker-row { display: flex; gap: 8px; align-items: center; }',
-        '.raru-panel .unlocker-row label { color: #b9bbbe; font-size: 12px; min-width: 150px; }',
+        '.raru-panel .unlocker-row label { color: #b9bbbe; font-size: 12px; min-width: 120px; }',
         '.raru-panel .unlocker-row input, .raru-panel .unlocker-row select, .raru-panel .unlocker-row textarea { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; font-family: inherit; flex: 1; box-sizing: border-box; }',
-        '.raru-panel .unlocker-row textarea { min-height: 50px; resize: vertical; }',
+        '.raru-panel .unlocker-row textarea { min-height: 44px; resize: vertical; }',
         '.raru-panel .unlocker-row input:focus, .raru-panel .unlocker-row select:focus, .raru-panel .unlocker-row textarea:focus { outline: none; border-color: #f4a900; }',
         '.raru-panel .unlocker-token { font-family: monospace; color: #68d391; font-size: 12px; }',
         '.raru-panel .unlocker-actions { display: flex; gap: 8px; flex-wrap: wrap; }',
@@ -514,7 +478,7 @@
         '.raru-panel .unlocker-actions button.danger { background: #6b2a2a; border-color: #8a3a3a; color: #fff; }',
         '.raru-panel .unlocker-actions button.danger:hover { background: #8a3a3a; }',
         '.raru-panel .unlocker-actions button:disabled { opacity: 0.4; cursor: not-allowed; }',
-        '.raru-panel .unlocker-log { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: monospace; font-size: 11px; color: #b9bbbe; height: 140px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }',
+        '.raru-panel .unlocker-log { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 6px; font-family: monospace; font-size: 11px; color: #b9bbbe; height: 90px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }',
         '.raru-panel .unlocker-log .err { color: #f87171; }',
         '.raru-panel .unlocker-log .ok { color: #68d391; }',
         '.raru-panel .unlocker-log .info { color: #63b3ed; }',
@@ -522,13 +486,17 @@
         '.raru-panel .unlocker-status.running { color: #f4a900; border-color: #f4a900; background: rgba(244,169,0,0.1); }',
         '.raru-panel .unlocker-status.done { color: #68d391; border-color: #38a169; background: rgba(104,211,145,0.1); }',
         '.raru-panel .unlocker-status.err { color: #f87171; border-color: #8a3a3a; background: rgba(248,113,113,0.1); }',
-        '.raru-panel .unlocker-ach-list { max-height: 160px; overflow-y: auto; border: 1px solid #40444b; border-radius: 4px; padding: 4px; background: #23272a; }',
-        '.raru-panel .unlocker-ach-list label { display: flex; align-items: center; gap: 6px; padding: 3px 6px; font-size: 12px; color: #dcddde; cursor: pointer; border-radius: 3px; }',
-        '.raru-panel .unlocker-ach-list label:hover { background: #2c2f33; }',
-        '.raru-panel .unlocker-ach-list input { accent-color: #f4a900; margin: 0; }',
-        '.raru-panel .unlocker-ach-list .ach-id { font-family: monospace; color: #b9bbbe; min-width: 60px; }',
-        '.raru-panel .unlocker-ach-list .ach-title { color: #fff; flex: 1; }',
-        '.raru-panel .unlocker-ach-list .ach-points { color: #f4a900; font-size: 11px; }',
+        '.raru-panel .unlocker-plan { max-height: 220px; overflow-y: auto; border: 1px solid #40444b; border-radius: 4px; padding: 4px; background: #23272a; display: flex; flex-direction: column; gap: 4px; }',
+        '.raru-panel .unlocker-plan .plan-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: #2c2f33; border-radius: 4px; border: 1px solid #383c42; cursor: grab; }',
+        '.raru-panel .unlocker-plan .plan-row.dragging { opacity: 0.5; }',
+        '.raru-panel .unlocker-plan .plan-row.done { opacity: 0.55; border-color: #38a169; }',
+        '.raru-panel .unlocker-plan .plan-row .drag { color: #888; font-family: monospace; cursor: grab; }',
+        '.raru-panel .unlocker-plan .plan-row .ach-icon { font-size: 14px; }',
+        '.raru-panel .unlocker-plan .plan-row .ach-id { font-family: monospace; color: #b9bbbe; min-width: 56px; }',
+        '.raru-panel .unlocker-plan .plan-row .ach-title { flex: 1; color: #fff; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
+        '.raru-panel .unlocker-plan .plan-row select { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 2px 4px; font-size: 11px; }',
+        '.raru-panel .unlocker-plan .plan-row .rm { background: transparent; color: #f87171; border: none; cursor: pointer; font-size: 13px; padding: 0 4px; }',
+        '.raru-panel .unlocker-plan .plan-row .rm:hover { color: #fff; background: #6b2a2a; border-radius: 3px; }',
 
         '.raru-panel .db-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #40444b; background: #23272a; flex: 0 0 auto; }',
         '.raru-panel .db-toolbar button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; }',
@@ -601,14 +569,31 @@
         '#raru-toast { position: fixed; right: 20px; bottom: 20px; background: #2e7d32; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 13px; z-index: 1000001; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; pointer-events: none; max-width: 400px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }',
         '#raru-toast.show { opacity: 1; transform: translateY(0); }',
         '#raru-toast.err { background: #c62828; }',
-        '#raru-toast.info { background: #2b6cb0; }'
+        '#raru-toast.info { background: #2b6cb0; }',
+
+        // Modal (quick unlock on ach page)
+        '#raru-quick-modal { display: none; position: fixed; inset: 0; z-index: 1000002; }',
+        '#raru-quick-modal .raru-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); }',
+        '#raru-quick-modal .raru-modal-box { position: relative; margin: 10vh auto 0; width: 420px; max-width: 92vw; background: #23272a; color: #dcddde; border: 1px solid #40444b; border-radius: 8px; padding: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }',
+        '#raru-quick-modal .raru-modal-title { color: #f4a900; font-weight: 600; font-size: 14px; margin-bottom: 10px; }',
+        '#raru-quick-modal .raru-modal-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }',
+        '#raru-quick-modal .raru-modal-row label { min-width: 120px; color: #b9bbbe; font-size: 12px; }',
+        '#raru-quick-modal .raru-modal-row input, #raru-quick-modal .raru-modal-row select { flex: 1; background: #2c2f33; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 5px 8px; font-size: 12px; box-sizing: border-box; }',
+        '#raru-quick-modal .raru-modal-actions { display: flex; gap: 8px; margin-top: 10px; }',
+        '#raru-quick-modal .raru-modal-actions button { background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; }',
+        '#raru-quick-modal .raru-modal-actions button.primary { background: #276749; border-color: #38a169; color: #fff; }',
+        '#raru-quick-modal .raru-modal-actions button:disabled { opacity: 0.4; cursor: not-allowed; }',
+        '#raru-quick-modal .raru-modal-log { margin-top: 8px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 6px; font-family: monospace; font-size: 11px; color: #b9bbbe; height: 90px; overflow-y: auto; white-space: pre-wrap; }',
+        '#raru-quick-modal .raru-modal-log .err { color: #f87171; }',
+        '#raru-quick-modal .raru-modal-log .ok { color: #68d391; }',
+        '#raru-quick-modal .raru-modal-log .info { color: #63b3ed; }'
     ].join('\n');
 
     const styleEl = document.createElement('style');
     styleEl.textContent = CSS;
     (document.head || document.documentElement).appendChild(styleEl);
 
-    // ---------- UI игр ----------
+    // ==== MODULE: UI GAMES PANEL ====
     const gamesPanel = document.createElement('div');
     gamesPanel.id = 'raru-games-panel';
     gamesPanel.className = 'raru-panel games hidden';
@@ -648,7 +633,7 @@
         '</div>' +
         '<div class="db-details" id="raru-details"></div>';
 
-    // ---------- UI достижений ----------
+    // ==== MODULE: UI ACHS PANEL ====
     const achsPanel = document.createElement('div');
     achsPanel.id = 'raru-achs-panel';
     achsPanel.className = 'raru-panel achs hidden';
@@ -675,7 +660,7 @@
         '</div>' +
         '<div class="db-details" id="raru-ach-details"></div>';
 
-    // ---------- UI Unlocker ----------
+    // ==== MODULE: UI UNLOCKER PANEL ====
     const unlockerPanel = document.createElement('div');
     unlockerPanel.id = 'raru-unlocker-panel';
     unlockerPanel.className = 'raru-panel unlocker hidden';
@@ -690,27 +675,24 @@
                 '<div class="unlocker-row"><label>Токен:</label><span class="unlocker-token" id="raru-unlocker-token">—</span></div>' +
                 '<div class="unlocker-actions">' +
                     '<button class="primary" data-act="login">Войти и сохранить токен</button>' +
-                    '<button data-act="check-token">Проверить токен (gameid)</button>' +
+                    '<button data-act="check-token">Проверить токен</button>' +
                     '<button class="danger" data-act="clear-token">Очистить токен</button>' +
                 '</div>' +
             '</div>' +
             '<div class="unlocker-section">' +
-                '<div class="unlocker-section-title">Параметры разблокировки</div>' +
-                '<div class="unlocker-row"><label>Хеш ROM (MD5):</label><input type="text" id="raru-unlocker-md5" placeholder="32 hex символа" maxlength="32" /></div>' +
-                '<div class="unlocker-row"><label>ID ачивок (через запятую):</label><input type="text" id="raru-unlocker-achs" placeholder="571396, 571397" /></div>' +
-                '<div class="unlocker-row"><label>Хардкор:</label><select id="raru-unlocker-hardcore"><option value="0">Нет (Softcore)</option><option value="1">Да (Hardcore)</option></select></div>' +
-                '<div class="unlocker-row"><label>Длительность (сек):</label><input type="number" id="raru-unlocker-seconds" value="300" min="30" max="86400" /></div>' +
-                '<div class="unlocker-row"><label>Rich Presence (через запятую):</label><textarea id="raru-unlocker-presence" placeholder="In menu, Stage 1, Boss fight"></textarea></div>' +
+                '<div class="unlocker-section-title">Параметры</div>' +
+                '<div class="unlocker-row"><label>Хеш ROM (MD5):</label><input type="text" id="raru-unlocker-md5" placeholder="32 hex" maxlength="32" /></div>' +
+                '<div class="unlocker-row"><label>Хардкор:</label><select id="raru-unlocker-hardcore"><option value="0">Softcore</option><option value="1">Hardcore</option></select></div>' +
+                '<div class="unlocker-row"><label>Rich Presence:</label><textarea id="raru-unlocker-presence" placeholder="In menu, Stage 1, Boss fight"></textarea></div>' +
             '</div>' +
             '<div class="unlocker-section">' +
-                '<div class="unlocker-section-title">Ачивки игры (подхват)</div>' +
+                '<div class="unlocker-section-title">План разблокировки</div>' +
                 '<div class="unlocker-actions" style="margin-bottom:6px;">' +
-                    '<button data-act="fetch-game-achs">📥 Подхватить ачивки игры</button>' +
-                    '<button data-act="select-all-achs">✓ Все</button>' +
-                    '<button data-act="deselect-all-achs">✕ Ничего</button>' +
-                    '<button data-act="apply-selected">→ В поле ID ачивок</button>' +
+                '<button data-act="plan-add-ach">+ Добавить ачивку</button>' +
+                '<button class="primary" data-act="plan-parse-page">📥 Парсить со страницы игры</button>' +
+                '<button data-act="plan-clear">✕ Очистить</button>' +
                 '</div>' +
-                '<div class="unlocker-ach-list" id="raru-unlocker-ach-list"><em style="color:#666;font-size:12px;">Введите MD5 и нажмите «Подхватить ачивки игры», либо откройте страницу игры и нажмите кнопку на странице.</em></div>' +
+                '<div class="unlocker-plan" id="raru-unlocker-plan"></div>' +
             '</div>' +
             '<div class="unlocker-section">' +
                 '<div class="unlocker-section-title">Запуск</div>' +
@@ -721,7 +703,7 @@
                 '<div class="unlocker-log" id="raru-unlocker-log"></div>' +
             '</div>' +
         '</div>';
-    // ---------- Монтирование ----------
+    // ==== MODULE: BOOTSTRAP MOUNT ====
     function mountUI() {
         if (!document.body) return setTimeout(mountUI, 50);
         document.body.appendChild(gamesPanel);
@@ -860,8 +842,7 @@
             const tr = document.createElement('tr');
             const td = document.createElement('td');
             td.colSpan = 5; td.className = 'no-rows'; td.textContent = 'Ничего не найдено';
-            tr.appendChild(td); gamesTbody.appendChild(tr);
-            return;
+            tr.appendChild(td); gamesTbody.appendChild(tr); return;
         }
 
         rows.forEach(function (r) {
@@ -895,10 +876,8 @@
                 if (isEditingGame) {
                     if (!confirm('Есть несохранённые правки. Переключиться на другую игру?')) return;
                 }
-                currentGameId = r.id;
-                isEditingGame = false;
-                renderGameTable();
-                renderGameDetails();
+                currentGameId = r.id; isEditingGame = false;
+                renderGameTable(); renderGameDetails();
             });
 
             gamesTbody.appendChild(tr);
@@ -931,9 +910,6 @@
         const br = document.createElement('button'); br.className = 'ru'; br.textContent = '🇷🇺 Русская версия'; br.disabled = !r.ru;
         if (r.ru) br.addEventListener('click', function () { window.open(r.ru, '_blank', 'noopener,noreferrer'); });
         a.appendChild(br);
-        const bu = document.createElement('button'); bu.className = 'primary'; bu.textContent = '🔓 Открыть в Unlocker';
-        bu.addEventListener('click', function () { openUnlockerForGame(r.id); });
-        a.appendChild(bu);
         const be = document.createElement('button'); be.className = 'edit'; be.textContent = '✎ Редактировать';
         be.addEventListener('click', function () { isEditingGame = true; renderGameDetails(); });
         a.appendChild(be);
@@ -1104,7 +1080,8 @@
             rows.push({
                 id: id, idNum: parseInt(id, 10) || 0,
                 title: e.title || ('Ачивка #' + id),
-                link: e.link || ('https://retroachievements.org/achievement/' + id)
+                link: e.link || ('https://retroachievements.org/achievement/' + id),
+                minutes: e.minutes || 0
             });
         });
         return rows;
@@ -1169,9 +1146,8 @@
             const tdId = document.createElement('td'); tdId.className = 'id'; tdId.textContent = r.id;
             const tdTitle = document.createElement('td'); tdTitle.className = 'name'; tdTitle.textContent = r.title;
             const tdLink = document.createElement('td');
-            tdLink.style.fontSize = '12px';
-            tdLink.style.color = '#63b3ed';
-            tdLink.textContent = r.link;
+            tdLink.style.fontSize = '12px'; tdLink.style.color = '#63b3ed';
+            tdLink.textContent = r.link + (r.minutes ? ' (' + r.minutes + ' мин)' : '');
 
             tr.appendChild(tdId); tr.appendChild(tdTitle); tr.appendChild(tdLink);
 
@@ -1208,15 +1184,29 @@
         achDetails.appendChild(link);
 
         const a = document.createElement('div'); a.className = 'detail-actions';
-        const bu = document.createElement('button'); bu.className = 'primary'; bu.textContent = '🔓 Открыть в Unlocker';
-        bu.addEventListener('click', function () { openUnlockerForAchievement(r.id); });
-        a.appendChild(bu);
         const be = document.createElement('button'); be.className = 'edit'; be.textContent = '✎ Редактировать';
         be.addEventListener('click', function () { isEditingAch = true; renderAchDetails(); });
         a.appendChild(be);
         const bl = document.createElement('button'); bl.textContent = '🔗 Открыть на RA';
         bl.addEventListener('click', function () { window.open(r.link, '_blank', 'noopener,noreferrer'); });
         a.appendChild(bl);
+        const badd = document.createElement('button'); badd.className = 'primary'; badd.textContent = '+ В план Unlocker';
+        badd.addEventListener('click', function () {
+            if (!unlockerPlan.find(function (p) { return p.id === r.id; })) {
+                const entry = ACHS[r.id] || {};
+                unlockerPlan.push({
+                    id: r.id,
+                    title: entry.title || r.title,
+                    minutes: entry.minutes || 5,
+                    done: false, startedAt: null, finishedAt: null
+                });
+                unlockerSavePlanToConfig();
+                toast('Добавлено в план: #' + r.id);
+            } else {
+                toast('Уже в плане', 'info');
+            }
+        });
+        a.appendChild(badd);
         achDetails.appendChild(a);
     }
 
@@ -1246,17 +1236,41 @@
         const linkInput = document.createElement('input'); linkInput.type = 'text'; linkInput.value = entry.link || ('https://retroachievements.org/achievement/' + r.id); linkInput.placeholder = 'https://retroachievements.org/achievement/...';
         linkRow.appendChild(linkLabel); linkRow.appendChild(linkInput); achDetails.appendChild(linkRow);
 
+        const md5Row = document.createElement('div'); md5Row.className = 'edit-row';
+        const md5Label = document.createElement('label'); md5Label.textContent = 'MD5 игры:';
+        const md5Input = document.createElement('input'); md5Input.type = 'text'; md5Input.value = entry.md5 || ''; md5Input.placeholder = '32 hex (опционально)'; md5Input.maxLength = 32;
+        md5Row.appendChild(md5Label); md5Row.appendChild(md5Input); achDetails.appendChild(md5Row);
+
+        const minRow = document.createElement('div'); minRow.className = 'edit-row';
+        const minLabel = document.createElement('label'); minLabel.textContent = 'Задержка (мин):';
+        const minInput = document.createElement('input'); minInput.type = 'number'; minInput.min = '1'; minInput.max = '600'; minInput.value = String(entry.minutes || 5);
+        minRow.appendChild(minLabel); minRow.appendChild(minInput); achDetails.appendChild(minRow);
+
+        const presRow = document.createElement('div'); presRow.className = 'edit-row';
+        const presLabel = document.createElement('label'); presLabel.textContent = 'Rich Presence:';
+        const presInput = document.createElement('input'); presInput.type = 'text'; presInput.value = entry.presence || ''; presInput.placeholder = 'In menu, Stage 1 (опционально)';
+        presRow.appendChild(presLabel); presRow.appendChild(presInput); achDetails.appendChild(presRow);
+
         const actions = document.createElement('div'); actions.className = 'detail-actions';
         const btnSave = document.createElement('button'); btnSave.className = 'primary'; btnSave.textContent = '✓ Сохранить';
         btnSave.addEventListener('click', function () {
-            const obj = {};
+            const obj = ACHS[r.id] || {};
             const t = titleInput.value.trim();
             const l = linkInput.value.trim();
+            const m = md5Input.value.trim().toLowerCase();
+            const mins = parseInt(minInput.value, 10) || 5;
+            const pres = presInput.value.trim();
             if (t) obj.title = t;
             if (l) obj.link = l;
-            if (Object.keys(obj).length === 0) delete ACHS[r.id];
-            else ACHS[r.id] = obj;
+            if (m && /^[0-9a-f]{32}$/.test(m)) obj.md5 = m; else delete obj.md5;
+            obj.minutes = mins;
+            if (pres) obj.presence = pres; else delete obj.presence;
+            ACHS[r.id] = obj;
             GM_setValue(STORAGE_ACHS, JSON.stringify(ACHS));
+            // Обновить план если есть
+            const p = unlockerPlan.find(function (x) { return x.id === r.id; });
+            if (p) { p.title = obj.title || p.title; p.minutes = mins; unlockerRenderPlan(); }
+            unlockerSavePlanToConfig();
             isEditingAch = false;
             renderAchTable(); renderAchDetails(); refreshAchievementPageUI();
         });
@@ -1316,6 +1330,7 @@
                         if (!ACHS[id]) ACHS[id] = {};
                         ACHS[id].title = info.full;
                         ACHS[id].link = 'https://retroachievements.org/achievement/' + id;
+                        if (!ACHS[id].minutes) ACHS[id].minutes = 5;
                         GM_setValue(STORAGE_ACHS, JSON.stringify(ACHS));
                         toast('Название получено: ' + info.full);
                         if (currentAchId === id && isEditingAch) renderAchDetails();
@@ -1340,7 +1355,138 @@
     }
 
     // ============================================================
-    // UNLOCKER — логика
+    // ACH PAGE UNLOCK BUTTON + QUICK MODAL
+    // ============================================================
+    function applyAchievementUnlockButton() {
+        const achId = getCurrentAchievementId();
+        if (!achId) return;
+        if (!ACHS || !ACHS[achId]) return; // показываем только если ачивка есть в базе
+        const anchor =
+            findButtonByText('Report an issue') ||
+            findButtonByText('Сообщить о проблеме') ||
+            findButtonByText('Report Issue');
+        if (!anchor) return;
+        if (anchor.previousElementSibling && anchor.previousElementSibling.dataset.raUnlockBtn === '1') return;
+
+        const btn = document.createElement('button');
+        btn.dataset.raUnlockBtn = '1';
+        btn.textContent = '🔓 Активировать';
+        btn.style.background = '#1a7f37'; btn.style.color = '#fff';
+        btn.style.border = '1px solid #2ea043'; btn.style.borderRadius = '6px';
+        btn.style.padding = '4px 12px'; btn.style.fontWeight = '600';
+        btn.style.fontSize = '13px'; btn.style.cursor = 'pointer';
+        btn.style.marginRight = '8px';
+        btn.addEventListener('click', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            openAchQuickUnlockModal(achId);
+        });
+        anchor.parentElement.insertBefore(btn, anchor);
+    }
+
+    function refreshAchievementPageUI() {
+        document.querySelectorAll('[data-ra-unlock-btn="1"]').forEach(function (el) { el.remove(); });
+        applyAchievementUnlockButton();
+    }
+
+    let quickModalEl = null;
+    function ensureQuickModal() {
+        if (quickModalEl) return quickModalEl;
+        const m = document.createElement('div');
+        m.id = 'raru-quick-modal';
+        m.innerHTML =
+            '<div class="raru-modal-backdrop"></div>' +
+            '<div class="raru-modal-box">' +
+                '<div class="raru-modal-title">Быстрая разблокировка</div>' +
+                '<div class="raru-modal-row"><label>Логин:</label><input type="text" id="raru-qm-user" autocomplete="username" /></div>' +
+                '<div class="raru-modal-row"><label>Пароль:</label><input type="password" id="raru-qm-pass" autocomplete="current-password" /></div>' +
+                '<div class="raru-modal-row" id="raru-qm-cred-hint" style="display:none;color:#68d391;font-size:12px;">Логин/пароль уже сохранены — можно оставить поля пустыми</div>' +
+                '<div class="raru-modal-row"><label>Режим:</label><select id="raru-qm-hardcore"><option value="0">Softcore</option><option value="1">Hardcore</option></select></div>' +
+                '<div class="raru-modal-row"><label>Ачивка:</label><span id="raru-qm-ach" style="color:#f4a900;font-weight:600;"></span></div>' +
+                '<div class="raru-modal-row"><label>Задержка (мин):</label><input type="number" id="raru-qm-minutes" min="1" max="600" value="1" /></div>' +
+                '<div class="raru-modal-actions">' +
+                    '<button class="primary" data-act="qm-run">▶ Активировать</button>' +
+                    '<button data-act="qm-cancel">✕ Отмена</button>' +
+                '</div>' +
+                '<div class="raru-modal-log" id="raru-qm-log"></div>' +
+            '</div>';
+        document.body.appendChild(m);
+        m.addEventListener('click', function (e) {
+            if (e.target.classList.contains('raru-modal-backdrop')) closeQuickModal();
+            const btn = e.target.closest('button[data-act]');
+            if (!btn) return;
+            if (btn.dataset.act === 'qm-cancel') closeQuickModal();
+            else if (btn.dataset.act === 'qm-run') runQuickUnlock(btn);
+        });
+        quickModalEl = m;
+        return m;
+    }
+
+    function closeQuickModal() { if (quickModalEl) quickModalEl.style.display = 'none'; }
+
+    function openAchQuickUnlockModal(achId) {
+        const m = ensureQuickModal();
+        const entry = ACHS[achId] || {};
+        const cfg = unlockerGetConfig();
+        const hasCreds = !!(cfg.user && (cfg.pass || unlockerGetToken()));
+        m.querySelector('#raru-qm-user').value = hasCreds ? '' : (cfg.user || '');
+        m.querySelector('#raru-qm-pass').value = hasCreds ? '' : (cfg.pass || '');
+        m.querySelector('#raru-qm-user').placeholder = hasCreds ? '(сохранён)' : 'Sianor';
+        m.querySelector('#raru-qm-pass').placeholder = hasCreds ? '(сохранён)' : '••••••••';
+        m.querySelector('#raru-qm-cred-hint').style.display = hasCreds ? 'block' : 'none';
+        m.querySelector('#raru-qm-hardcore').value = String(cfg.hardcore || 0);
+        m.querySelector('#raru-qm-ach').textContent = '#' + achId + ' — ' + (entry.title || '');
+        m.querySelector('#raru-qm-minutes').value = String(entry.minutes || 1);
+        m.querySelector('#raru-qm-log').textContent = '';
+        m.style.display = 'block';
+    }
+
+    async function runQuickUnlock(btn) {
+        const m = quickModalEl;
+        const achId = getCurrentAchievementId();
+        if (!achId) return;
+        const entry = ACHS[achId] || {};
+        const logEl = m.querySelector('#raru-qm-log');
+        const log = function (msg, cls) {
+            const d = document.createElement('div');
+            if (cls) d.className = cls;
+            d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+            logEl.appendChild(d);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+
+        const cfg = unlockerGetConfig();
+        const userIn = m.querySelector('#raru-qm-user').value.trim();
+        const passIn = m.querySelector('#raru-qm-pass').value;
+        const user = userIn || cfg.user;
+        const pass = passIn || cfg.pass;
+        if (!user) { log('Нужен логин', 'err'); return; }
+        const hardcore = parseInt(m.querySelector('#raru-qm-hardcore').value, 10) || 0;
+        const minutes = Math.max(1, parseInt(m.querySelector('#raru-qm-minutes').value, 10) || 1);
+        const md5 = (entry.md5 || cfg.md5 || '').toLowerCase();
+        if (!/^[0-9a-f]{32}$/.test(md5)) {
+            log('Нет MD5 (заполните md5 в записи ачивки через Ctrl+Shift+X)', 'err'); return;
+        }
+
+        if (userIn || passIn) { cfg.user = user; cfg.pass = pass; unlockerSetConfig(cfg); }
+
+        btn.disabled = true;
+        log('Старт: #' + achId + ', hc=' + hardcore + ', задержка=' + minutes + ' мин', 'info');
+        try {
+            await unlockerRunSingle({
+                token: unlockerGetToken(),
+                user: user, pass: pass, md5: md5,
+                achId: parseInt(achId, 10), hardcore: hardcore,
+                delayMs: minutes * 60 * 1000,
+                presenceList: parsePresenceList(entry.presence || cfg.presence || 'In menu'),
+                log: log
+            });
+            log('Готово', 'ok');
+        } catch (e) { log('Ошибка: ' + e.message, 'err'); }
+        finally { btn.disabled = false; }
+    }
+
+    // ============================================================
+    // UNLOCKER — ENGINE
     // ============================================================
     const uUI = {
         status: unlockerPanel.querySelector('#raru-unlocker-status'),
@@ -1348,11 +1494,9 @@
         pass: unlockerPanel.querySelector('#raru-unlocker-pass'),
         token: unlockerPanel.querySelector('#raru-unlocker-token'),
         md5: unlockerPanel.querySelector('#raru-unlocker-md5'),
-        achs: unlockerPanel.querySelector('#raru-unlocker-achs'),
         hardcore: unlockerPanel.querySelector('#raru-unlocker-hardcore'),
-        seconds: unlockerPanel.querySelector('#raru-unlocker-seconds'),
         presence: unlockerPanel.querySelector('#raru-unlocker-presence'),
-        achList: unlockerPanel.querySelector('#raru-unlocker-ach-list'),
+        plan: unlockerPanel.querySelector('#raru-unlocker-plan'),
         log: unlockerPanel.querySelector('#raru-unlocker-log')
     };
 
@@ -1376,11 +1520,9 @@
             const raw = GM_getValue(STORAGE_UNLOCK_CFG, null);
             if (raw) return JSON.parse(raw);
         } catch (e) {}
-        return { user: '', pass: '', md5: '', achs: '', hardcore: 1, seconds: 300, presence: 'In menu, Stage 1, Boss fight' };
+        return { user: '', pass: '', md5: '', hardcore: 0, presence: 'In menu, Stage 1, Boss fight', plan: [] };
     }
-    function unlockerSetConfig(cfg) {
-        GM_setValue(STORAGE_UNLOCK_CFG, JSON.stringify(cfg));
-    }
+    function unlockerSetConfig(cfg) { GM_setValue(STORAGE_UNLOCK_CFG, JSON.stringify(cfg)); }
     function unlockerGetToken() {
         const tok = GM_getValue(STORAGE_UNLOCK_TOKEN, '');
         const usr = GM_getValue(STORAGE_UNLOCK_TOKEN_USER, '');
@@ -1391,7 +1533,7 @@
     function unlockerSetToken(token, user) {
         GM_setValue(STORAGE_UNLOCK_TOKEN, token || '');
         GM_setValue(STORAGE_UNLOCK_TOKEN_USER, user || '');
-        uUI.token.textContent = token ? token.slice(0, 8) + '…' + token.slice(-4) : '—';
+        if (uUI.token) uUI.token.textContent = token ? token.slice(0, 8) + '…' + token.slice(-4) : '—';
     }
 
     function unlockerLoadConfigIntoUI() {
@@ -1399,24 +1541,21 @@
         uUI.user.value = cfg.user || '';
         uUI.pass.value = cfg.pass || '';
         uUI.md5.value = cfg.md5 || '';
-        uUI.achs.value = cfg.achs || '';
         uUI.hardcore.value = String(cfg.hardcore || 0);
-        uUI.seconds.value = String(cfg.seconds || 300);
         uUI.presence.value = cfg.presence || 'In menu, Stage 1, Boss fight';
         const tok = unlockerGetToken();
         uUI.token.textContent = tok ? tok.slice(0, 8) + '…' + tok.slice(-4) : '—';
+        unlockerLoadPlanFromConfig(cfg);
     }
 
     function unlockerSaveConfigFromUI() {
-        const cfg = {
-            user: uUI.user.value.trim(),
-            pass: uUI.pass.value,
-            md5: uUI.md5.value.trim().toLowerCase(),
-            achs: uUI.achs.value.trim(),
-            hardcore: parseInt(uUI.hardcore.value, 10) || 0,
-            seconds: parseInt(uUI.seconds.value, 10) || 300,
-            presence: uUI.presence.value.trim() || 'In menu'
-        };
+        const cfg = unlockerGetConfig();
+        cfg.user = uUI.user.value.trim();
+        cfg.pass = uUI.pass.value;
+        cfg.md5 = uUI.md5.value.trim().toLowerCase();
+        cfg.hardcore = parseInt(uUI.hardcore.value, 10) || 0;
+        cfg.presence = uUI.presence.value.trim() || 'In menu';
+        cfg.plan = unlockerPlan.map(function (p) { return { id: p.id, title: p.title, minutes: p.minutes }; });
         unlockerSetConfig(cfg);
         return cfg;
     }
@@ -1427,22 +1566,15 @@
                 return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k] == null ? '' : payload[k]);
             }).join('&');
             GM_xmlhttpRequest({
-                method: 'POST',
-                url: UNLOCK_DOREQUEST,
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'User-Agent': UNLOCK_UA
-                },
-                data: body,
-                timeout: 20000,
+                method: 'POST', url: UNLOCK_DOREQUEST,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UNLOCK_UA },
+                data: body, timeout: 20000,
                 onload: function (res) {
                     if (res.status >= 200 && res.status < 300) {
-                        let j;
-                        try { j = JSON.parse(res.responseText); }
-                        catch (e) { j = { _raw: res.responseText }; }
+                        let j; try { j = JSON.parse(res.responseText); } catch (e) { j = { _raw: res.responseText }; }
                         resolve(j);
                     } else if (res.status === 401 || res.status === 403) {
-                        reject(new Error('HTTP ' + res.status + ' (неверный логин/токен или доступ запрещён)'));
+                        reject(new Error('HTTP ' + res.status + ' (неверный логин/токен)'));
                     } else {
                         reject(new Error('HTTP ' + res.status + ': ' + (res.responseText || '').slice(0, 200)));
                     }
@@ -1461,8 +1593,7 @@
             const token = data && data.Token;
             if (!token) throw new Error('login2 не вернул Token: ' + JSON.stringify(data));
             unlockerSetToken(token, cfg.user);
-            ulog('login2 ok, token=' + token.slice(0, 8) + '...', 'ok');
-            usetStatus('Токен получен', 'done');
+            ulog('login2 ok', 'ok'); usetStatus('Токен получен', 'done');
             return token;
         });
     }
@@ -1481,7 +1612,7 @@
         const cfg = unlockerGetConfig();
         return unlockerPost({ r: 'patch', u: cfg.user, t: token, g: gameId }).then(function (data) {
             const n = data && data.PatchData ? Object.keys(data.PatchData).length : 0;
-            ulog('patch g=' + gameId + ': ' + n + ' определений ачивок', 'info');
+            ulog('patch g=' + gameId + ': ' + n + ' ачивок', 'info');
             return data;
         });
     }
@@ -1490,7 +1621,7 @@
         const cfg = unlockerGetConfig();
         return unlockerPost({ r: 'unlocks', u: cfg.user, t: token, g: gameId, h: hardcore }).then(function (data) {
             const ids = new Set((data && data.UserUnlocks) || []);
-            ulog('unlocks g=' + gameId + ' hc=' + hardcore + ': уже есть ' + ids.size, 'info');
+            ulog('unlocks: уже есть ' + ids.size, 'info');
             return ids;
         });
     }
@@ -1506,7 +1637,7 @@
     function unlockerPing(token, gameId, md5, presence) {
         const cfg = unlockerGetConfig();
         return unlockerPost({ r: 'ping', u: cfg.user, t: token, g: gameId, m: presence, m2: md5 }).then(function (data) {
-            ulog('ping g=' + gameId + ' presence=' + JSON.stringify(presence), 'info');
+            ulog('ping presence=' + JSON.stringify(presence), 'info');
             return data;
         });
     }
@@ -1514,25 +1645,17 @@
     function unlockerAchievementWonData(token, achId, hardcore) {
         const cfg = unlockerGetConfig();
         return unlockerPost({ r: 'achievementwondata', u: cfg.user, t: token, a: achId, h: hardcore }).then(function (data) {
-            ulog('achievementwondata a=' + achId + ': NumAchieved=' + (data && data.NumAchieved), 'info');
+            ulog('wondata a=' + achId, 'info');
             return data;
         });
     }
 
+    // Простейший MD5 (hex) — для подписи award
     function md5hex(str) {
-        // Простая реализация MD5 (hex)
         function rotl(x, n) { return (x << n) | (x >>> (32 - n)); }
-        function tohex(n) {
-            let s = '', i;
-            for (i = 0; i < 4; i++) s += ((n >> (i * 8 + 4)) & 0xf).toString(16) + ((n >> (i * 8)) & 0xf).toString(16);
-            return s;
-        }
-        function utf8(s) {
-            return unescape(encodeURIComponent(s));
-        }
-        const bytes = utf8(str);
-        const len = bytes.length;
-        const words = [];
+        function tohex(n) { let s = '', i; for (i = 0; i < 4; i++) s += ((n >> (i * 8 + 4)) & 0xf).toString(16) + ((n >> (i * 8)) & 0xf).toString(16); return s; }
+        function utf8(s) { return unescape(encodeURIComponent(s)); }
+        const bytes = utf8(str); const len = bytes.length; const words = [];
         for (let i = 0; i < len; i++) words[i >> 2] |= (bytes.charCodeAt(i) & 0xff) << ((i % 4) * 8);
         words[len >> 2] |= 0x80 << ((len % 4) * 8);
         const bitLen = len * 8;
@@ -1544,70 +1667,38 @@
         function ii(a, b, c, d, x, s, t) { return rotl(a + (c ^ (b | ~d)) + x + t, s) + b; }
         for (let i = 0; i < words.length; i += 16) {
             const oa = a, ob = b, oc = c, od = d;
-            a = ff(a, b, c, d, words[i] || 0, 7, -680876936);
-            d = ff(d, a, b, c, words[i + 1] || 0, 12, -389564586);
-            c = ff(c, d, a, b, words[i + 2] || 0, 17, 606105819);
-            b = ff(b, c, d, a, words[i + 3] || 0, 22, -1044525330);
-            a = ff(a, b, c, d, words[i + 4] || 0, 7, -176418897);
-            d = ff(d, a, b, c, words[i + 5] || 0, 12, 1200080426);
-            c = ff(c, d, a, b, words[i + 6] || 0, 17, -1473231341);
-            b = ff(b, c, d, a, words[i + 7] || 0, 22, -45705983);
-            a = ff(a, b, c, d, words[i + 8] || 0, 7, 1770035416);
-            d = ff(d, a, b, c, words[i + 9] || 0, 12, -1958414417);
-            c = ff(c, d, a, b, words[i + 10] || 0, 17, -42063);
-            b = ff(b, c, d, a, words[i + 11] || 0, 22, -1990404162);
-            a = ff(a, b, c, d, words[i + 12] || 0, 7, 1804603682);
-            d = ff(d, a, b, c, words[i + 13] || 0, 12, -40341101);
-            c = ff(c, d, a, b, words[i + 14] || 0, 17, -1502002290);
-            b = ff(b, c, d, a, words[i + 15] || 0, 22, 1236535329);
-            a = gg(a, b, c, d, words[i + 1] || 0, 5, -165796510);
-            d = gg(d, a, b, c, words[i + 6] || 0, 9, -1069501632);
-            c = gg(c, d, a, b, words[i + 11] || 0, 14, 643717713);
-            b = gg(b, c, d, a, words[i] || 0, 20, -373897302);
-            a = gg(a, b, c, d, words[i + 5] || 0, 5, -701558691);
-            d = gg(d, a, b, c, words[i + 10] || 0, 9, 38016083);
-            c = gg(c, d, a, b, words[i + 15] || 0, 14, -660478335);
-            b = gg(b, c, d, a, words[i + 4] || 0, 20, -405537848);
-            a = gg(a, b, c, d, words[i + 9] || 0, 5, 568446438);
-            d = gg(d, a, b, c, words[i + 14] || 0, 9, -1019803690);
-            c = gg(c, d, a, b, words[i + 3] || 0, 14, -187363961);
-            b = gg(b, c, d, a, words[i + 8] || 0, 20, 1163531501);
-            a = gg(a, b, c, d, words[i + 13] || 0, 5, -1444681467);
-            d = gg(d, a, b, c, words[i + 2] || 0, 9, -51403784);
-            c = gg(c, d, a, b, words[i + 7] || 0, 14, 1735328473);
-            b = gg(b, c, d, a, words[i + 12] || 0, 20, -1926607734);
-            a = hh(a, b, c, d, words[i + 5] || 0, 4, -378558);
-            d = hh(d, a, b, c, words[i + 8] || 0, 11, -2022574463);
-            c = hh(c, d, a, b, words[i + 11] || 0, 16, 1839030562);
-            b = hh(b, c, d, a, words[i + 14] || 0, 23, -35309556);
-            a = hh(a, b, c, d, words[i + 1] || 0, 4, -1530992060);
-            d = hh(d, a, b, c, words[i + 4] || 0, 11, 1272893353);
-            c = hh(c, d, a, b, words[i + 7] || 0, 16, -155497632);
-            b = hh(b, c, d, a, words[i + 10] || 0, 23, -1094730640);
-            a = hh(a, b, c, d, words[i + 13] || 0, 4, 681279174);
-            d = hh(d, a, b, c, words[i] || 0, 11, -358537222);
-            c = hh(c, d, a, b, words[i + 3] || 0, 16, -722521979);
-            b = hh(b, c, d, a, words[i + 6] || 0, 23, 76029189);
-            a = hh(a, b, c, d, words[i + 9] || 0, 4, -640364487);
-            d = hh(d, a, b, c, words[i + 12] || 0, 11, -421815835);
-            c = hh(c, d, a, b, words[i + 15] || 0, 16, 530742520);
-            b = hh(b, c, d, a, words[i + 2] || 0, 23, -995338651);
-            a = ii(a, b, c, d, words[i] || 0, 6, -198630844);
-            d = ii(d, a, b, c, words[i + 7] || 0, 10, 1126891415);
-            c = ii(c, d, a, b, words[i + 14] || 0, 15, -1416354905);
-            b = ii(b, c, d, a, words[i + 5] || 0, 21, -57434055);
-            a = ii(a, b, c, d, words[i + 12] || 0, 6, 1700485571);
-            d = ii(d, a, b, c, words[i + 3] || 0, 10, -1894986606);
-            c = ii(c, d, a, b, words[i + 10] || 0, 15, -1051523);
-            b = ii(b, c, d, a, words[i + 1] || 0, 21, -2054922799);
-            a = ii(a, b, c, d, words[i + 8] || 0, 6, 1873313359);
-            d = ii(d, a, b, c, words[i + 15] || 0, 10, -30611744);
-            c = ii(c, d, a, b, words[i + 6] || 0, 15, -1560198380);
-            b = ii(b, c, d, a, words[i + 13] || 0, 21, 1309151649);
-            a = ii(a, b, c, d, words[i + 4] || 0, 6, -145523070);
-            d = ii(d, a, b, c, words[i + 11] || 0, 10, -1120210379);
-            c = ii(c, d, a, b, words[i + 2] || 0, 15, 718787259);
-            b = ii(b, c, d, a, words[i + 9] || 0, 21, -343485551);
+            a = ff(a, b, c, d, words[i] || 0, 7, -680876936); d = ff(d, a, b, c, words[i + 1] || 0, 12, -389564586);
+            c = ff(c, d, a, b, words[i + 2] || 0, 17, 606105819); b = ff(b, c, d, a, words[i + 3] || 0, 22, -1044525330);
+            a = ff(a, b, c, d, words[i + 4] || 0, 7, -176418897); d = ff(d, a, b, c, words[i + 5] || 0, 12, 1200080426);
+            c = ff(c, d, a, b, words[i + 6] || 0, 17, -1473231341); b = ff(b, c, d, a, words[i + 7] || 0, 22, -45705983);
+            a = ff(a, b, c, d, words[i + 8] || 0, 7, 1770035416); d = ff(d, a, b, c, words[i + 9] || 0, 12, -1958414417);
+            c = ff(c, d, a, b, words[i + 10] || 0, 17, -42063); b = ff(b, c, d, a, words[i + 11] || 0, 22, -1990404162);
+            a = ff(a, b, c, d, words[i + 12] || 0, 7, 1804603682); d = ff(d, a, b, c, words[i + 13] || 0, 12, -40341101);
+            c = ff(c, d, a, b, words[i + 14] || 0, 17, -1502002290); b = ff(b, c, d, a, words[i + 15] || 0, 22, 1236535329);
+            a = gg(a, b, c, d, words[i + 1] || 0, 5, -165796510); d = gg(d, a, b, c, words[i + 6] || 0, 9, -1069501632);
+            c = gg(c, d, a, b, words[i + 11] || 0, 14, 643717713); b = gg(b, c, d, a, words[i] || 0, 20, -373897302);
+            a = gg(a, b, c, d, words[i + 5] || 0, 5, -701558691); d = gg(d, a, b, c, words[i + 10] || 0, 9, 38016083);
+            c = gg(c, d, a, b, words[i + 15] || 0, 14, -660478335); b = gg(b, c, d, a, words[i + 4] || 0, 20, -405537848);
+            a = gg(a, b, c, d, words[i + 9] || 0, 5, 568446438); d = gg(d, a, b, c, words[i + 14] || 0, 9, -1019803690);
+            c = gg(c, d, a, b, words[i + 3] || 0, 14, -187363961); b = gg(b, c, d, a, words[i + 8] || 0, 20, 1163531501);
+            a = gg(a, b, c, d, words[i + 13] || 0, 5, -1444681467); d = gg(d, a, b, c, words[i + 2] || 0, 9, -51403784);
+            c = gg(c, d, a, b, words[i + 7] || 0, 14, 1735328473); b = gg(b, c, d, a, words[i + 12] || 0, 20, -1926607734);
+            a = hh(a, b, c, d, words[i + 5] || 0, 4, -378558); d = hh(d, a, b, c, words[i + 8] || 0, 11, -2022574463);
+            c = hh(c, d, a, b, words[i + 11] || 0, 16, 1839030562); b = hh(b, c, d, a, words[i + 14] || 0, 23, -35309556);
+            a = hh(a, b, c, d, words[i + 1] || 0, 4, -1530992060); d = hh(d, a, b, c, words[i + 4] || 0, 11, 1272893353);
+            c = hh(c, d, a, b, words[i + 7] || 0, 16, -155497632); b = hh(b, c, d, a, words[i + 10] || 0, 23, -1094730640);
+            a = hh(a, b, c, d, words[i + 13] || 0, 4, 681279174); d = hh(d, a, b, c, words[i] || 0, 11, -358537222);
+            c = hh(c, d, a, b, words[i + 3] || 0, 16, -722521979); b = hh(b, c, d, a, words[i + 6] || 0, 23, 76029189);
+            a = hh(a, b, c, d, words[i + 9] || 0, 4, -640364487); d = hh(d, a, b, c, words[i + 12] || 0, 11, -421815835);
+            c = hh(c, d, a, b, words[i + 15] || 0, 16, 530742520); b = hh(b, c, d, a, words[i + 2] || 0, 23, -995338651);
+            a = ii(a, b, c, d, words[i] || 0, 6, -198630844); d = ii(d, a, b, c, words[i + 7] || 0, 10, 1126891415);
+            c = ii(c, d, a, b, words[i + 14] || 0, 15, -1416354905); b = ii(b, c, d, a, words[i + 5] || 0, 21, -57434055);
+            a = ii(a, b, c, d, words[i + 12] || 0, 6, 1700485571); d = ii(d, a, b, c, words[i + 3] || 0, 10, -1894986606);
+            c = ii(c, d, a, b, words[i + 10] || 0, 15, -1051523); b = ii(b, c, d, a, words[i + 1] || 0, 21, -2054922799);
+            a = ii(a, b, c, d, words[i + 8] || 0, 6, 1873313359); d = ii(d, a, b, c, words[i + 15] || 0, 10, -30611744);
+            c = ii(c, d, a, b, words[i + 6] || 0, 15, -1560198380); b = ii(b, c, d, a, words[i + 13] || 0, 21, 1309151649);
+            a = ii(a, b, c, d, words[i + 4] || 0, 6, -145523070); d = ii(d, a, b, c, words[i + 11] || 0, 10, -1120210379);
+            c = ii(c, d, a, b, words[i + 2] || 0, 15, 718787259); b = ii(b, c, d, a, words[i + 9] || 0, 21, -343485551);
             a = (a + oa) | 0; b = (b + ob) | 0; c = (c + oc) | 0; d = (d + od) | 0;
         }
         return (tohex(a) + tohex(b) + tohex(c) + tohex(d)).toLowerCase();
@@ -1618,117 +1709,133 @@
         const v = md5hex(String(achId) + token + String(hardcore));
         return unlockerPost({ r: 'awardachievement', u: cfg.user, t: token, a: achId, h: hardcore, v: v }).then(function (data) {
             const ok = data && data.Success;
-            ulog('award a=' + achId + ' hc=' + hardcore + ' Success=' + ok + ' Score=' + (data && data.Score), ok ? 'ok' : 'err');
-            if (!ok) ulog('payload: ' + JSON.stringify(data), 'err');
+            ulog('award a=' + achId + ' Success=' + ok, ok ? 'ok' : 'err');
             return data;
         });
     }
 
-    function unlockerSchedule(totalSeconds, n) {
-        if (n <= 0) return [];
-        let lo = 15, hi = Math.max(30, totalSeconds - 15);
-        if (hi - lo < n) hi = lo + n;
-        const arr = [];
-        while (arr.length < n) {
-            const v = lo + Math.floor(Math.random() * (hi - lo));
-            if (arr.indexOf(v) === -1) arr.push(v);
+    function unlockerSleep(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+    function parsePresenceList(raw) { return (raw || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }); }
+
+    // Одиночная разблокировка (для quick modal)
+    async function unlockerRunSingle(opts) {
+        const { user, pass, md5, achId, hardcore, delayMs, presenceList, log } = opts;
+        let token = opts.token || unlockerGetToken();
+        if (!token) {
+            const data = await unlockerPost({ r: 'login2', u: user, p: pass });
+            token = data && data.Token;
+            if (!token) throw new Error('login2 не вернул Token: ' + JSON.stringify(data));
+            unlockerSetToken(token, user);
+            log('login2 ok', 'ok');
         }
-        arr.sort(function (a, b) { return a - b; });
-        return arr;
+        let gameId;
+        try { gameId = await unlockerResolveGameId(token, md5); }
+        catch (e) {
+            log('Токен отклонён, перелогин', 'err');
+            const data = await unlockerPost({ r: 'login2', u: user, p: pass });
+            token = data && data.Token;
+            if (!token) throw new Error('login2 не вернул Token');
+            unlockerSetToken(token, user);
+            gameId = await unlockerResolveGameId(token, md5);
+        }
+        await unlockerStartSession(token, gameId, md5, hardcore);
+        const already = await unlockerFetchUnlocks(token, gameId, hardcore);
+        if (already.has(achId)) { log('Уже выбита ранее', 'info'); return; }
+        const t0 = Date.now();
+        const target = t0 + delayMs;
+        let nextPing = t0 + 5000 + Math.random() * 10000;
+        const plist = (presenceList && presenceList.length) ? presenceList : ['Playing'];
+        while (Date.now() < target && !unlockerStop) {
+            const now = Date.now();
+            if (now >= nextPing) {
+                try { await unlockerPing(token, gameId, md5, plist[Math.floor(Math.random() * plist.length)]); }
+                catch (e) { log('ping failed: ' + e.message, 'err'); }
+                nextPing = Date.now() + (UNLOCK_PING_INTERVAL + (Math.random() * 2 - 1) * UNLOCK_PING_JITTER) * 1000;
+            } else {
+                const sleepMs = Math.min(1000, Math.min(target, nextPing) - now);
+                await unlockerSleep(Math.max(0, sleepMs));
+            }
+        }
+        if (unlockerStop) { log('Остановлено', 'err'); return; }
+        await unlockerSleep(500 + Math.random() * 1500);
+        await unlockerAchievementWonData(token, achId, hardcore);
+        await unlockerAward(token, achId, hardcore);
     }
 
-    function unlockerSleep(ms) {
-        return new Promise(function (resolve) { setTimeout(resolve, ms); });
-    }
-
-    function parsePresenceList(raw) {
-        return (raw || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; });
-    }
-
+    // Плановая разблокировка (для Unlocker UI)
     async function unlockerRun() {
         if (unlockerRunning) { toast('Уже запущено', 'err'); return; }
         const cfg = unlockerSaveConfigFromUI();
         if (!cfg.user || !cfg.pass) { usetStatus('Ошибка: нужны логин/пароль', 'err'); return; }
-        if (!/^[0-9a-f]{32}$/.test(cfg.md5)) { usetStatus('Ошибка: MD5 должен быть 32 hex-символа', 'err'); return; }
-        const achsList = cfg.achs.split(',').map(function (s) { return parseInt(s.trim(), 10); }).filter(function (n) { return n > 0; });
-        if (achsList.length === 0) { usetStatus('Ошибка: укажите хотя бы одну ачивку', 'err'); return; }
+        if (!/^[0-9a-f]{32}$/.test(cfg.md5)) { usetStatus('Ошибка: MD5 должен быть 32 hex', 'err'); return; }
+        if (!unlockerPlan || unlockerPlan.length === 0) { usetStatus('Ошибка: план пуст', 'err'); return; }
 
         unlockerRunning = true;
         unlockerStop = false;
         usetStatus('Запущено...', 'running');
-        ulog('=== Старт: ' + achsList.length + ' ачивок, hc=' + cfg.hardcore + ', ' + cfg.seconds + 'с ===', 'info');
+        ulog('=== Старт: ' + unlockerPlan.length + ' ачивок ===', 'info');
 
         try {
             let token = unlockerGetToken();
-            if (!token) {
-                ulog('Токена нет, логинимся...', 'info');
-                token = await unlockerLogin();
-            }
-
+            if (!token) { ulog('Токена нет, логинимся...', 'info'); token = await unlockerLogin(); }
             let gameId;
-            try {
-                gameId = await unlockerResolveGameId(token, cfg.md5);
-            } catch (e) {
-                ulog('Токен отклонён (' + e.message + '), перелогин', 'err');
+            try { gameId = await unlockerResolveGameId(token, cfg.md5); }
+            catch (e) {
+                ulog('Токен отклонён, перелогин', 'err');
                 token = await unlockerLogin();
                 gameId = await unlockerResolveGameId(token, cfg.md5);
             }
-
             await unlockerFetchPatch(token, gameId);
             const already = await unlockerFetchUnlocks(token, gameId, cfg.hardcore);
             await unlockerStartSession(token, gameId, cfg.md5, cfg.hardcore);
 
-            const todo = achsList.filter(function (a) { return !already.has(a); });
-            if (todo.length !== achsList.length) {
-                ulog('Пропускаем уже выбитые: ' + achsList.filter(function (a) { return already.has(a); }).join(', '), 'info');
-            }
-            if (todo.length === 0) {
-                ulog('Все ачивки уже выбиты — нечего делать', 'ok');
-                usetStatus('Все ачивки уже выбиты', 'done');
-                unlockerRunning = false;
-                return;
-            }
-
             const presenceList = parsePresenceList(cfg.presence);
             if (presenceList.length === 0) presenceList.push('Playing');
 
-            const delays = unlockerSchedule(cfg.seconds, todo.length);
-            const t0 = Date.now();
-            let nextPing = t0 + 5000 + Math.random() * 10000;
+            let nextPing = Date.now() + 5000 + Math.random() * 10000;
 
-            for (let i = 0; i < todo.length; i++) {
-                if (unlockerStop) { ulog('Остановлено пользователем', 'err'); usetStatus('Остановлено', 'err'); break; }
-                const achId = todo[i];
-                const target = t0 + delays[i] * 1000;
+            while (!unlockerStop) {
+                const item = unlockerPlan.find(function (p) { return !p.done; });
+                if (!item) break;
+
+                if (already.has(item.id)) {
+                    ulog('Уже выбита: ' + item.id, 'info');
+                    item.done = true; unlockerRenderPlan();
+                    continue;
+                }
+
+                item.startedAt = Date.now();
+                const target = item.startedAt + item.minutes * 60 * 1000;
+                ulog('▶ #' + item.id + ' через ' + item.minutes + ' мин', 'info');
+                unlockerRenderPlan();
 
                 while (Date.now() < target && !unlockerStop) {
                     const now = Date.now();
                     if (now >= nextPing) {
-                        try {
-                            const p = presenceList[Math.floor(Math.random() * presenceList.length)];
-                            await unlockerPing(token, gameId, cfg.md5, p);
-                        } catch (e) { ulog('ping failed: ' + e.message, 'err'); }
+                        try { await unlockerPing(token, gameId, cfg.md5, presenceList[Math.floor(Math.random() * presenceList.length)]); }
+                        catch (e) { ulog('ping failed: ' + e.message, 'err'); }
                         nextPing = Date.now() + (UNLOCK_PING_INTERVAL + (Math.random() * 2 - 1) * UNLOCK_PING_JITTER) * 1000;
                     } else {
                         const sleepMs = Math.min(1000, Math.min(target, nextPing) - now);
                         await unlockerSleep(Math.max(0, sleepMs));
                     }
                 }
-                if (unlockerStop) { usetStatus('Остановлено', 'err'); break; }
+                if (unlockerStop) break;
 
-                await unlockerSleep(500 + Math.random() * 2000);
+                await unlockerSleep(500 + Math.random() * 1500);
                 try {
-                    await unlockerAchievementWonData(token, achId, cfg.hardcore);
-                    await unlockerAward(token, achId, cfg.hardcore);
+                    await unlockerAchievementWonData(token, item.id, cfg.hardcore);
+                    await unlockerAward(token, item.id, cfg.hardcore);
+                    item.done = true; item.finishedAt = Date.now();
+                    unlockerRenderPlan();
                 } catch (e) {
-                    ulog('Ошибка award a=' + achId + ': ' + e.message, 'err');
+                    ulog('Ошибка award #' + item.id + ': ' + e.message, 'err');
+                    item.done = true; unlockerRenderPlan();
                 }
             }
 
-            if (!unlockerStop) {
-                ulog('=== Завершено ===', 'ok');
-                usetStatus('Завершено', 'done');
-            }
+            if (unlockerStop) { usetStatus('Остановлено', 'err'); ulog('Остановлено', 'err'); }
+            else { usetStatus('Все ачивки выполнены', 'done'); ulog('=== Все выполнены, пинги прекращены ===', 'ok'); }
         } catch (e) {
             ulog('КРИТИЧЕСКАЯ ОШИБКА: ' + e.message, 'err');
             usetStatus('Ошибка: ' + e.message, 'err');
@@ -1737,68 +1844,149 @@
         }
     }
 
-    function openUnlockerForAchievement(achId) {
-        unlockerLoadConfigIntoUI();
-        uUI.achs.value = String(achId);
-        unlockerSaveConfigFromUI();
-        unlockerPanel.classList.remove('hidden');
-        uUI.log.scrollTop = uUI.log.scrollHeight;
+    // ==== MODULE: UNLOCKER PLAN UI ====
+    let unlockerPlan = [];
+    const PLAN_MINUTES = [1, 2, 5, 10, 15, 20, 30, 40, 60, 90, 120];
+
+    function unlockerRenderPlan() {
+        const el = uUI.plan;
+        if (!el) return;
+        el.innerHTML = '';
+        if (!unlockerPlan.length) {
+            el.innerHTML = '<em style="color:#666;font-size:12px;padding:6px;">План пуст. Нажмите «+ Добавить ачивку».</em>';
+            return;
+        }
+        unlockerPlan.forEach(function (p, idx) {
+            const row = document.createElement('div');
+            row.className = 'plan-row' + (p.done ? ' done' : '');
+            row.draggable = true;
+            row.dataset.idx = String(idx);
+
+            const drag = document.createElement('span'); drag.className = 'drag'; drag.textContent = '☰';
+            const icon = document.createElement('span'); icon.className = 'ach-icon'; icon.textContent = '🏆';
+            const idS = document.createElement('span'); idS.className = 'ach-id'; idS.textContent = p.id;
+            const title = document.createElement('span'); title.className = 'ach-title'; title.textContent = p.title || '⏳ Загрузка названия...';
+            const sel = document.createElement('select');
+            PLAN_MINUTES.forEach(function (m) {
+                const o = document.createElement('option');
+                o.value = String(m); o.textContent = m + ' мин';
+                if (m === p.minutes) o.selected = true;
+                sel.appendChild(o);
+            });
+            if (PLAN_MINUTES.indexOf(p.minutes) === -1) {
+                const o = document.createElement('option');
+                o.value = String(p.minutes); o.textContent = p.minutes + ' мин';
+                o.selected = true; sel.appendChild(o);
+            }
+            sel.addEventListener('change', function () {
+                p.minutes = parseInt(sel.value, 10) || 1;
+                if (p.done) { p.done = false; p.startedAt = null; p.finishedAt = null; }
+                unlockerRenderPlan(); unlockerSavePlanToConfig();
+            });
+            const rm = document.createElement('button');
+            rm.className = 'rm'; rm.textContent = '✕'; rm.title = 'Удалить';
+            rm.addEventListener('click', function () {
+                unlockerPlan.splice(idx, 1);
+                unlockerRenderPlan(); unlockerSavePlanToConfig();
+            });
+
+            row.appendChild(drag); row.appendChild(icon); row.appendChild(idS);
+            row.appendChild(title); row.appendChild(sel); row.appendChild(rm);
+            el.appendChild(row);
+        });
+
+        let dragIdx = null;
+        el.querySelectorAll('.plan-row').forEach(function (row) {
+            row.addEventListener('dragstart', function (e) {
+                dragIdx = parseInt(row.dataset.idx, 10);
+                row.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', String(dragIdx)); } catch (err) {}
+            });
+            row.addEventListener('dragend', function () { row.classList.remove('dragging'); dragIdx = null; });
+            row.addEventListener('dragover', function (e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+            row.addEventListener('drop', function (e) {
+                e.preventDefault();
+                if (dragIdx === null) return;
+                const dropIdx = parseInt(row.dataset.idx, 10);
+                if (dropIdx === dragIdx) return;
+                const moved = unlockerPlan.splice(dragIdx, 1)[0];
+                unlockerPlan.splice(dropIdx, 0, moved);
+                unlockerRenderPlan(); unlockerSavePlanToConfig();
+            });
+        });
     }
 
-    function openUnlockerForGame(gameId) {
-        unlockerLoadConfigIntoUI();
-        // Попробуем подтянуть MD5 из игры, если есть на странице
-        unlockerPanel.classList.remove('hidden');
-        ulog('Открыто для игры #' + gameId + '. Проверьте MD5 и нажмите «Подхватить ачивки игры».', 'info');
+        function unlockerSavePlanToConfig() {
+        // План Unlocker хранится ТОЛЬКО в конфиге, НЕ в ACHS (чтобы не попадать в UI Ctrl+Shift+X)
+        const cfg = unlockerGetConfig();
+        cfg.plan = unlockerPlan.map(function (p) { return { id: p.id, title: p.title, minutes: p.minutes }; });
+        unlockerSetConfig(cfg);
     }
 
-    // Парсинг ачивок со страницы игры (для подхвата)
-    function collectAchievementsFromPage() {
+        function unlockerLoadPlanFromConfig(cfg) {
+        const src = cfg.plan || [];
+        unlockerPlan = src.map(function (p) {
+            return {
+                id: String(p.id),
+                title: p.title || '',
+                minutes: p.minutes || 1,
+                done: false, startedAt: null, finishedAt: null
+            };
+        });
+        unlockerRenderPlan();
+        // Подтягиваем названия асинхронно для тех, у кого title пустой
+        unlockerPlan.forEach(function (p) {
+            if (p.title) return;
+            fetchAchievementInfo(p.id).then(function (info) {
+                p.title = info.full;
+                unlockerRenderPlan();
+                unlockerSavePlanToConfig();
+            }).catch(function () {});
+        });
+    }
+
+      // ==== PARSER: GAME PAGE ACHIEVEMENTS ====
+    // Собирает {id, title} со страницы /game/ID.
+    // Ищет ссылки на /achievement/ID и пытается вытащить заголовок из ближайшей карточки.
+    function parseAchievementsFromGamePage() {
+        if (!/^\/game\/\d+/.test(window.location.pathname)) return [];
         const out = [];
-        const links = document.querySelectorAll('a[href*="/achievement/"]');
         const seen = {};
+        const links = document.querySelectorAll('a[href*="/achievement/"]');
         links.forEach(function (a) {
             const m = (a.getAttribute('href') || '').match(/\/achievement\/(\d+)/);
             if (!m) return;
             const id = m[1];
             if (seen[id]) return;
             seen[id] = true;
-            // Ищем заголовок рядом
             let title = '';
-            const card = a.closest('li, div[class*="achievement"], article');
-            if (card) {
-                const tEl = card.querySelector('[class*="title"], h3, h4, strong');
-                if (tEl) title = (tEl.textContent || '').trim();
+            // 1) Сам текст ссылки (если это название, а не иконка)
+            const linkText = (a.textContent || '').replace(/\s+/g, ' ').trim();
+            if (linkText && linkText.length > 2 && !/^\d+$/.test(linkText)) title = linkText;
+            // 2) Ближайшая карточка с заголовком
+            if (!title) {
+                const card = a.closest('li, article, div[class*="achievement"], div[class*="achievement-list"] > *');
+                if (card) {
+                    const titleEl = card.querySelector('[class*="title"], h3, h4, strong, b');
+                    if (titleEl) {
+                        const t = (titleEl.textContent || '').replace(/\s+/g, ' ').trim();
+                        if (t && !/^\d+$/.test(t)) title = t;
+                    }
+                }
             }
-            if (!title) title = (a.textContent || '').trim();
-            out.push({ id: id, title: title, points: 0 });
+            // 3) aria-label / title атрибут
+            if (!title) {
+                const al = a.getAttribute('aria-label') || a.getAttribute('title') || '';
+                if (al) title = al.trim();
+            }
+            out.push({ id: id, title: title });
         });
         return out;
     }
 
-    function renderUnlockerAchList(achs) {
-        uUI.achList.innerHTML = '';
-        if (!achs || achs.length === 0) {
-            uUI.achList.innerHTML = '<em style="color:#666;font-size:12px;">Ничего не найдено.</em>';
-            return;
-        }
-        achs.forEach(function (a) {
-            const label = document.createElement('label');
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.value = a.id;
-            cb.checked = true;
-            const idSpan = document.createElement('span'); idSpan.className = 'ach-id'; idSpan.textContent = a.id;
-            const titleSpan = document.createElement('span'); titleSpan.className = 'ach-title'; titleSpan.textContent = a.title || ('Ачивка #' + a.id);
-            const ptSpan = document.createElement('span'); ptSpan.className = 'ach-points'; ptSpan.textContent = a.points ? ('★' + a.points) : '';
-            label.appendChild(cb); label.appendChild(idSpan); label.appendChild(titleSpan); label.appendChild(ptSpan);
-            uUI.achList.appendChild(label);
-        });
-    }
-
     function bindUnlockerUI() {
-        // Автосохранение конфига при вводе
-        ['user', 'pass', 'md5', 'achs', 'hardcore', 'seconds', 'presence'].forEach(function (k) {
+        ['user', 'pass', 'md5', 'hardcore', 'presence'].forEach(function (k) {
             const el = uUI[k];
             if (!el) return;
             el.addEventListener('change', function () { unlockerSaveConfigFromUI(); });
@@ -1810,8 +1998,7 @@
             const act = btn.dataset.act;
             try {
                 if (act === 'login') {
-                    btn.disabled = true;
-                    usetStatus('Логин...', 'running');
+                    btn.disabled = true; usetStatus('Логин...', 'running');
                     try { await unlockerLogin(); } finally { btn.disabled = false; }
                 }
                 else if (act === 'check-token') {
@@ -1827,48 +2014,71 @@
                     } finally { btn.disabled = false; }
                 }
                 else if (act === 'clear-token') {
-                    if (!confirm('Очистить сохранённый токен?')) return;
+                    if (!confirm('Очистить токен?')) return;
                     unlockerSetToken('', '');
                     usetStatus('Токен очищен', '');
                 }
-                else if (act === 'fetch-game-achs') {
-                    unlockerSaveConfigFromUI();
-                    const fromPage = collectAchievementsFromPage();
-                    if (fromPage.length > 0) {
-                        ulog('Подхвачено со страницы: ' + fromPage.length, 'ok');
-                        renderUnlockerAchList(fromPage);
+              else if (act === 'plan-parse-page') {
+                    const parsed = parseAchievementsFromGamePage();
+                    if (!parsed.length) {
+                        toast('На этой странице нет ачивок (откройте /game/ID)', 'err');
                         return;
                     }
-                    const tok = unlockerGetToken();
-                    if (!tok) { toast('Нет токена — войдите', 'err'); return; }
-                    const cfg = unlockerGetConfig();
-                    if (!cfg.md5) { toast('Введите MD5', 'err'); return; }
-                    btn.disabled = true;
-                    usetStatus('Загрузка ачивок игры...', 'running');
-                    try {
-                        const gid = await unlockerResolveGameId(tok, cfg.md5);
-                        const patch = await unlockerFetchPatch(tok, gid);
-                        const pd = (patch && patch.PatchData) || {};
-                        const list = Object.keys(pd).map(function (id) {
-                            return { id: id, title: pd[id].Title || ('Ачивка #' + id), points: pd[id].Points || 0 };
+                    let added = 0;
+                    parsed.forEach(function (a) {
+                        if (unlockerPlan.find(function (p) { return p.id === a.id; })) return;
+                        unlockerPlan.push({
+                            id: a.id,
+                            title: a.title || '',
+                            minutes: 5,
+                            done: false, startedAt: null, finishedAt: null
                         });
-                        ulog('patch: ' + list.length + ' ачивок', 'ok');
-                        renderUnlockerAchList(list);
-                        usetStatus('Ачивки загружены: ' + list.length, 'done');
-                    } finally { btn.disabled = false; }
+                        added++;
+                    });
+                    unlockerRenderPlan();
+                    unlockerSavePlanToConfig();
+                    // Подтянуть названия, если со страницы не удалось
+                    unlockerPlan.forEach(function (p) {
+                        if (p.title) return;
+                        fetchAchievementInfo(p.id).then(function (info) {
+                            p.title = info.full;
+                            unlockerRenderPlan();
+                            unlockerSavePlanToConfig();
+                        }).catch(function () {});
+                    });
+                    toast('Добавлено в план: ' + added + ' (всего: ' + unlockerPlan.length + ')');
                 }
-                else if (act === 'select-all-achs') {
-                    uUI.achList.querySelectorAll('input[type="checkbox"]').forEach(function (c) { c.checked = true; });
+                else if (act === 'plan-add-ach') {
+                    const raw = prompt('ID ачивки (можно несколько через запятую):', '');
+                    if (!raw) return;
+                    const ids = raw.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return /^\d+$/.test(s); });
+                    if (!ids.length) { toast('Введите числовые ID', 'err'); return; }
+                    ids.forEach(function (id) {
+                        if (unlockerPlan.find(function (p) { return p.id === id; })) return;
+                        const entry = ACHS[id] || {};
+                        unlockerPlan.push({
+                            id: id, title: entry.title || ('Ачивка #' + id),
+                            minutes: entry.minutes || 5,
+                            done: false, startedAt: null, finishedAt: null
+                        });
+                        if (!entry.title) {
+                            fetchAchievementInfo(id).then(function (info) {
+                                const p = unlockerPlan.find(function (x) { return x.id === id; });
+                                if (p) { p.title = info.full; unlockerRenderPlan(); }
+                                if (!ACHS[id]) ACHS[id] = {};
+                                ACHS[id].title = info.full;
+                                ACHS[id].link = 'https://retroachievements.org/achievement/' + id;
+                                if (!ACHS[id].minutes) ACHS[id].minutes = 5;
+                                GM_setValue(STORAGE_ACHS, JSON.stringify(ACHS));
+                                renderAchTable();
+                            }).catch(function () {});
+                        }
+                    });
+                    unlockerRenderPlan(); unlockerSavePlanToConfig();
                 }
-                else if (act === 'deselect-all-achs') {
-                    uUI.achList.querySelectorAll('input[type="checkbox"]').forEach(function (c) { c.checked = false; });
-                }
-                else if (act === 'apply-selected') {
-                    const ids = [];
-                    uUI.achList.querySelectorAll('input[type="checkbox"]:checked').forEach(function (c) { ids.push(c.value); });
-                    uUI.achs.value = ids.join(', ');
-                    unlockerSaveConfigFromUI();
-                    toast('В поле ID: ' + ids.length + ' ачивок');
+                else if (act === 'plan-clear') {
+                    if (!confirm('Очистить план?')) return;
+                    unlockerPlan = []; unlockerRenderPlan(); unlockerSavePlanToConfig();
                 }
                 else if (act === 'run') { unlockerRun(); }
                 else if (act === 'stop') { unlockerStop = true; usetStatus('Останавливаемся...', 'running'); }
@@ -1879,7 +2089,7 @@
         });
     }
 
-    // ---------- Горячие клавиши ----------
+    // ==== MODULE: HOTKEYS ====
     document.addEventListener('keydown', function (e) {
         if (e.ctrlKey && e.shiftKey) {
             if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
@@ -1892,21 +2102,17 @@
             if (e.key === 'X' || e.key === 'x' || e.code === 'KeyX') {
                 e.preventDefault(); e.stopPropagation();
                 achsPanel.classList.toggle('hidden');
-                if (!achsPanel.classList.contains('hidden')) {
-                    renderAchTable(); renderAchDetails();
-                }
+                if (!achsPanel.classList.contains('hidden')) { renderAchTable(); renderAchDetails(); }
             }
             if (e.key === 'U' || e.key === 'u' || e.code === 'KeyU') {
                 e.preventDefault(); e.stopPropagation();
                 unlockerPanel.classList.toggle('hidden');
-                if (!unlockerPanel.classList.contains('hidden')) {
-                    unlockerLoadConfigIntoUI();
-                }
+                if (!unlockerPanel.classList.contains('hidden')) { unlockerLoadConfigIntoUI(); }
             }
         }
     }, true);
 
-    // ---------- Пункт меню профиля ----------
+    // ==== MODULE: PROFILE MENU ITEM ====
     function injectMenuItems() {
         const signOut = findMenuLinkByText('Sign out');
         if (!signOut) return;
@@ -1919,6 +2125,7 @@
         dataItem.addEventListener('click', function (e) {
             e.preventDefault(); e.stopPropagation();
             fetchGames().catch(function () {});
+            fetchAchs().catch(function () {});
         });
         signOut.insertAdjacentElement('beforebegin', dataItem);
     }
@@ -1934,7 +2141,7 @@
         return null;
     }
 
-    // ---------- Загрузка кэша при старте ----------
+    // ==== MODULE: BOOTSTRAP ====
     try {
         const cachedGames = GM_getValue(STORAGE_GAMES, null);
         if (cachedGames) { try { GAME_ID_TO_URL = JSON.parse(cachedGames); gamesLoaded = true; } catch (e) {} }
@@ -1943,11 +2150,7 @@
     } catch (e) {}
 
     function tick() {
-        if (gamesLoaded) {
-            applyReplacements();
-            applyStatusBadge();
-            applyComment();
-        }
+        if (gamesLoaded) { applyReplacements(); applyStatusBadge(); applyComment(); }
         if (achLoaded) applyAchievementUnlockButton();
         injectMenuItems();
     }
