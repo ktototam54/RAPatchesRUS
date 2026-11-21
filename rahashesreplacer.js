@@ -2,7 +2,7 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      11.3
+// @version      11.4
 // @author       You
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
