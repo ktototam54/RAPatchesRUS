@@ -1,5 +1,86 @@
 {
-  "509655": {
-    "link": "https://retroachievements.org/achievement/509655"
+  "22587": {
+    "link": "https://retroachievements.org/achievement/22587",
+    "md5": "97109a5bdfaf19926135edb84876888e",
+    "minutes": 5,
+    "presence": "Playing Spyro 2: Season of Flame"
+  },
+  "78924": {
+    "link": "https://retroachievements.org/achievement/78924",
+    "md5": "27a89f079bca542e3aa36108a390a681",
+    "minutes": 5,
+    "presence": "Playing Astro Robo SASA"
+  },
+  "84771": {
+    "link": "https://retroachievements.org/achievement/84771",
+    "md5": "e48bc1ffd56f43adddf7be719d68d288",
+    "minutes": 5,
+    "presence": "Playing Doom"
+  },
+  "84772": {
+    "link": "https://retroachievements.org/achievement/84772",
+    "minutes": 5,
+    "presence": "Playing Doom",
+    "md5": "e48bc1ffd56f43adddf7be719d68d288"
+  },
+  "84913": {
+    "link": "https://retroachievements.org/achievement/84913",
+    "md5": "e48bc1ffd56f43adddf7be719d68d288",
+    "minutes": 5,
+    "presence": "Playing Doom"
+  },
+  "90355": {
+    "link": "https://retroachievements.org/achievement/90355",
+    "md5": "138a1ee7a95f5733fc6039723a170381",
+    "minutes": 5,
+    "presence": "Playing Tekken"
+  },
+  "90621": {
+    "link": "https://retroachievements.org/achievement/90621",
+    "md5": "5540142e67608a050cd8059a885bd20b",
+    "minutes": 5,
+    "presence": "Playing Twisted Metal 2"
+  },
+  "249144": {
+    "link": "https://retroachievements.org/achievement/249144",
+    "md5": "dfbe9be0b9663c0308329e6b073c26ba",
+    "minutes": 5,
+    "presence": "Playing WWF SmackDown! 2: Know Your Role"
+  },
+  "287039": {
+    "link": "https://retroachievements.org/achievement/287039",
+    "md5": "dbdbf87e0849d0bf2a10597050ae5df2",
+    "minutes": 5,
+    "presence": "Playing Grand Theft Auto: San Andreas [Subset - Viva Las Venturas]"
+  },
+  "320120": {
+    "link": "https://retroachievements.org/achievement/320120",
+    "md5": "29ed385bcfb409b1cabe0101da5f300f",
+    "minutes": 5,
+    "presence": "Playing ~Hack~ The Ultimate Doom"
+  },
+  "320158": {
+    "link": "https://retroachievements.org/achievement/320158",
+    "md5": "29ed385bcfb409b1cabe0101da5f300f",
+    "minutes": 5,
+    "presence": "Playing ~Hack~ The Ultimate Doom"
+  },
+  "320159": {
+    "link": "https://retroachievements.org/achievement/320159",
+    "minutes": 5,
+    "presence": "Playing ~Hack~ The Ultimate Doom",
+    "md5": "29ed385bcfb409b1cabe0101da5f300f"
+  },
+  "401288": {
+    "link": "https://retroachievements.org/achievement/401288",
+    "minutes": 5,
+    "md5": "80c397c7427410527caefb77faa779cf",
+    "presence": "In Menu"
+  },
+  "614138": {
+    "link": "https://retroachievements.org/achievement/614138",
+    "md5": "c051dfe204ea27051f661ba5fb8fe7d7",
+    "minutes": 5,
+    "presence": "Getting ready to bash!"
   }
 }
