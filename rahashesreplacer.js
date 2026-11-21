@@ -2,8 +2,8 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      11.4
-// @author       You
+// @version      11.5
+// @author       Sianor
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
 // @grant        GM_getValue
@@ -1401,7 +1401,7 @@
                 '<div class="raru-modal-row" id="raru-qm-cred-hint" style="display:none;color:#68d391;font-size:12px;">Логин/пароль уже сохранены — можно оставить поля пустыми</div>' +
                 '<div class="raru-modal-row"><label>Режим:</label><select id="raru-qm-hardcore"><option value="0">Softcore</option><option value="1">Hardcore</option></select></div>' +
                 '<div class="raru-modal-row"><label>Ачивка:</label><span id="raru-qm-ach" style="color:#f4a900;font-weight:600;"></span></div>' +
-                '<div class="raru-modal-row"><label>Задержка (мин):</label><input type="number" id="raru-qm-minutes" min="1" max="600" value="1" /></div>' +
+                '<div class="raru-modal-row"><label>Задержка (мин):</label><input type="number" id="raru-qm-minutes" min="0" max="600" value="1" /></div>' +
                 '<div class="raru-modal-actions">' +
                     '<button class="primary" data-act="qm-run">▶ Активировать</button>' +
                     '<button data-act="qm-cancel">✕ Отмена</button>' +
@@ -1460,7 +1460,8 @@
         const pass = passIn || cfg.pass;
         if (!user) { log('Нужен логин', 'err'); return; }
         const hardcore = parseInt(m.querySelector('#raru-qm-hardcore').value, 10) || 0;
-        const minutes = Math.max(1, parseInt(m.querySelector('#raru-qm-minutes').value, 10) || 1);
+       let minutes = parseInt(m.querySelector('#raru-qm-minutes').value, 10);
+        if (isNaN(minutes) || minutes < 0) minutes = 0;
         const md5 = (entry.md5 || cfg.md5 || '').toLowerCase();
         if (!/^[0-9a-f]{32}$/.test(md5)) {
             log('Нет MD5 (заполните md5 в записи ачивки через Ctrl+Shift+X)', 'err'); return;
@@ -1740,10 +1741,21 @@
         await unlockerStartSession(token, gameId, md5, hardcore);
         const already = await unlockerFetchUnlocks(token, gameId, hardcore);
         if (already.has(achId)) { log('Уже выбита ранее', 'info'); return; }
+                const plist = (presenceList && presenceList.length) ? presenceList : ['Playing'];
+
+        if (delayMs <= 0) {
+            // 0 минут — один пинг и сразу выдача
+            try { await unlockerPing(token, gameId, md5, plist[Math.floor(Math.random() * plist.length)]); }
+            catch (e) { log('ping failed: ' + e.message, 'err'); }
+            if (unlockerStop) { log('Остановлено', 'err'); return; }
+            await unlockerAchievementWonData(token, achId, hardcore);
+            await unlockerAward(token, achId, hardcore);
+            return;
+        }
+
         const t0 = Date.now();
         const target = t0 + delayMs;
         let nextPing = t0 + 5000 + Math.random() * 10000;
-        const plist = (presenceList && presenceList.length) ? presenceList : ['Playing'];
         while (Date.now() < target && !unlockerStop) {
             const now = Date.now();
             if (now >= nextPing) {
@@ -1803,11 +1815,43 @@
                     continue;
                 }
 
-                item.startedAt = Date.now();
+                                item.startedAt = Date.now();
+                const isZero = item.minutes === 0;
                 const target = item.startedAt + item.minutes * 60 * 1000;
-                ulog('▶ #' + item.id + ' через ' + item.minutes + ' мин', 'info');
+                ulog('▶ #' + item.id + (isZero ? ' (0 мин — мгновенный финиш остальных)' : ' через ' + item.minutes + ' мин'), 'info');
                 unlockerRenderPlan();
 
+                // --- 0 минут: 1 пинг и выдать всё оставшееся разом ---
+                if (isZero) {
+                    // Один пинг (Rich Presence), чтобы сервер "увидел" сессию
+                    try {
+                        const p = presenceList[Math.floor(Math.random() * presenceList.length)];
+                        await unlockerPing(token, gameId, cfg.md5, p);
+                    } catch (e) { ulog('ping failed: ' + e.message, 'err'); }
+
+                    // Выдаём ВСЁ, что осталось (включая текущую), по порядку, без пауз и пингов
+                    while (!unlockerStop) {
+                        const next = unlockerPlan.find(function (p) { return !p.done; });
+                        if (!next) break;
+                        if (already.has(next.id)) {
+                            ulog('Уже выбита: ' + next.id, 'info');
+                            next.done = true; unlockerRenderPlan();
+                            continue;
+                        }
+                        try {
+                            await unlockerAchievementWonData(token, next.id, cfg.hardcore);
+                            await unlockerAward(token, next.id, cfg.hardcore);
+                            next.done = true; next.finishedAt = Date.now();
+                            unlockerRenderPlan();
+                        } catch (e) {
+                            ulog('Ошибка award #' + next.id + ': ' + e.message, 'err');
+                            next.done = true; unlockerRenderPlan();
+                        }
+                    }
+                    break; // выходим из внешнего while — всё разом выдано
+                }
+
+                // --- обычное ожидание минут ---
                 while (Date.now() < target && !unlockerStop) {
                     const now = Date.now();
                     if (now >= nextPing) {
@@ -1855,7 +1899,7 @@
             el.innerHTML = '<em style="color:#666;font-size:12px;padding:6px;">План пуст. Нажмите «+ Добавить ачивку».</em>';
             return;
         }
-        unlockerPlan.forEach(function (p, idx) {
+            unlockerPlan.forEach(function (p, idx) {
             const row = document.createElement('div');
             row.className = 'plan-row' + (p.done ? ' done' : '');
             row.draggable = true;
@@ -1864,24 +1908,32 @@
             const drag = document.createElement('span'); drag.className = 'drag'; drag.textContent = '☰';
             const icon = document.createElement('span'); icon.className = 'ach-icon'; icon.textContent = '🏆';
             const idS = document.createElement('span'); idS.className = 'ach-id'; idS.textContent = p.id;
-            const title = document.createElement('span'); title.className = 'ach-title'; title.textContent = p.title || ('Ачивка #' + p.id);
-            const sel = document.createElement('select');
-            PLAN_MINUTES.forEach(function (m) {
-                const o = document.createElement('option');
-                o.value = String(m); o.textContent = m + ' мин';
-                if (m === p.minutes) o.selected = true;
-                sel.appendChild(o);
-            });
-            if (PLAN_MINUTES.indexOf(p.minutes) === -1) {
-                const o = document.createElement('option');
-                o.value = String(p.minutes); o.textContent = p.minutes + ' мин';
-                o.selected = true; sel.appendChild(o);
-            }
-            sel.addEventListener('change', function () {
-                p.minutes = parseInt(sel.value, 10) || 1;
+            const title = document.createElement('span'); title.className = 'ach-title';
+            title.textContent = p.title || ('Ачивка #' + p.id);
+
+            // ← Новый input вместо select
+            const minInput = document.createElement('input');
+            minInput.type = 'number';
+            minInput.min = '0';
+            minInput.max = '600';
+            minInput.value = String(p.minutes);
+            minInput.style.width = '64px';
+            minInput.style.background = '#23272a';
+            minInput.style.color = '#dcddde';
+            minInput.style.border = '1px solid #4f545c';
+            minInput.style.borderRadius = '4px';
+            minInput.style.padding = '2px 4px';
+            minInput.style.fontSize = '11px';
+            minInput.style.textAlign = 'center';
+            minInput.title = 'Минуты (0 = мгновенно всё оставшееся)';
+            minInput.addEventListener('change', function () {
+                const v = parseInt(minInput.value, 10);
+                p.minutes = (isNaN(v) || v < 0) ? 0 : v;
+                minInput.value = String(p.minutes);
                 if (p.done) { p.done = false; p.startedAt = null; p.finishedAt = null; }
-                unlockerRenderPlan(); unlockerSavePlanToConfig();
+                unlockerSavePlanToConfig();
             });
+
             const rm = document.createElement('button');
             rm.className = 'rm'; rm.textContent = '✕'; rm.title = 'Удалить';
             rm.addEventListener('click', function () {
@@ -1890,7 +1942,7 @@
             });
 
             row.appendChild(drag); row.appendChild(icon); row.appendChild(idS);
-            row.appendChild(title); row.appendChild(sel); row.appendChild(rm);
+            row.appendChild(title); row.appendChild(minInput); row.appendChild(rm);
             el.appendChild(row);
         });
 
@@ -2065,8 +2117,6 @@
                         });
                         newIds.push(id);
                     });
-                    unlockerRenderPlan();
-                    unlockerSavePlanToConfig();
                     if (newIds.length) enqueueTitleFetch(newIds);
                 }
                 else if (act === 'plan-clear') {
@@ -2117,6 +2167,7 @@
         setTextContent(dataItem, 'Получить последние данные');
         dataItem.addEventListener('click', function (e) {
             e.preventDefault(); e.stopPropagation();
+            toast('Обновляю данные игр и достижений...', 'info');
             fetchGames().catch(function () {});
             fetchAchs().catch(function () {});
         });
