@@ -2,7 +2,7 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      11.7
+// @version      11.8
 // @author       Sianor
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -495,6 +495,7 @@
         '.raru-panel .unlocker-plan .plan-row .ach-title { flex: 1; color: #fff; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
         '.raru-panel .unlocker-plan .plan-row select { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 2px 4px; font-size: 11px; }',
         '.raru-panel .unlocker-plan .plan-row .rm { background: transparent; color: #f87171; border: none; cursor: pointer; font-size: 13px; padding: 0 4px; }',
+        '.raru-panel .unlocker-plan .plan-row .break-seq { width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; accent-color: #f4a900; }',
         '.raru-panel .unlocker-plan .plan-row .rm:hover { color: #fff; background: #6b2a2a; border-radius: 3px; }',
 
         '.raru-panel .db-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #40444b; background: #23272a; flex: 0 0 auto; }',
@@ -1197,6 +1198,7 @@
                     id: r.id,
                     title: entry.title || r.title,
                     minutes: entry.minutes || 5,
+                    breakSequence: false,
                     done: false, startedAt: null, finishedAt: null
                 });
                 unlockerSavePlanToConfig();
@@ -1555,7 +1557,7 @@
         cfg.md5 = uUI.md5.value.trim().toLowerCase();
         cfg.hardcore = parseInt(uUI.hardcore.value, 10) || 0;
         cfg.presence = uUI.presence.value.trim() || 'In menu';
-        cfg.plan = unlockerPlan.map(function (p) { return { id: p.id, title: p.title, minutes: p.minutes }; });
+        cfg.plan = unlockerPlan.map(function (p) { return { id: p.id, title: p.title, minutes: p.minutes, breakSequence: !!p.breakSequence }; });
         unlockerSetConfig(cfg);
         return cfg;
     }
@@ -1817,12 +1819,19 @@
 
                                 item.startedAt = Date.now();
                 const isZero = item.minutes === 0;
+                const breakAll = isZero && !!item.breakSequence;
                 const target = item.startedAt + item.minutes * 60 * 1000;
-                ulog('▶ #' + item.id + (isZero ? ' (0 мин — мгновенный финиш остальных)' : ' через ' + item.minutes + ' мин'), 'info');
+                if (breakAll) {
+                    ulog('▶ #' + item.id + ' (0 мин + галочка — мгновенный финиш остальных)', 'info');
+                } else if (isZero) {
+                    ulog('▶ #' + item.id + ' (0 мин — мгновенная разблокировка)', 'info');
+                } else {
+                    ulog('▶ #' + item.id + ' через ' + item.minutes + ' мин', 'info');
+                }
                 unlockerRenderPlan();
 
-                // --- 0 минут: 1 пинг и выдать всё оставшееся разом ---
-                if (isZero) {
+                // --- 0 минут + галочка: 1 пинг и выдать всё оставшееся разом ---
+                if (breakAll) {
                     // Один пинг (Rich Presence), чтобы сервер "увидел" сессию
                     try {
                         const p = presenceList[Math.floor(Math.random() * presenceList.length)];
@@ -1849,6 +1858,25 @@
                         }
                     }
                     break; // выходим из внешнего while — всё разом выдано
+                }
+
+                // --- 0 минут без галочки: мгновенно только эту ачивку ---
+                if (isZero) {
+                    try {
+                        const p = presenceList[Math.floor(Math.random() * presenceList.length)];
+                        await unlockerPing(token, gameId, cfg.md5, p);
+                    } catch (e) { ulog('ping failed: ' + e.message, 'err'); }
+                    await unlockerSleep(300 + Math.random() * 700);
+                    try {
+                        await unlockerAchievementWonData(token, item.id, cfg.hardcore);
+                        await unlockerAward(token, item.id, cfg.hardcore);
+                        item.done = true; item.finishedAt = Date.now();
+                        unlockerRenderPlan();
+                    } catch (e) {
+                        ulog('Ошибка award #' + item.id + ': ' + e.message, 'err');
+                        item.done = true; unlockerRenderPlan();
+                    }
+                    continue;
                 }
 
                 // --- обычное ожидание минут ---
@@ -1925,11 +1953,29 @@
             minInput.style.padding = '2px 4px';
             minInput.style.fontSize = '11px';
             minInput.style.textAlign = 'center';
-            minInput.title = 'Минуты (0 = мгновенно всё оставшееся)';
+            minInput.title = 'Минуты (0 = мгновенно только эту ачивку)';
             minInput.addEventListener('change', function () {
                 const v = parseInt(minInput.value, 10);
                 p.minutes = (isNaN(v) || v < 0) ? 0 : v;
                 minInput.value = String(p.minutes);
+                if (p.minutes !== 0) p.breakSequence = false;
+                if (p.done) { p.done = false; p.startedAt = null; p.finishedAt = null; }
+                unlockerSavePlanToConfig();
+                unlockerRenderPlan();
+            });
+
+            // Галочка «сломать последовательность» — только при 0 минут
+            const breakCb = document.createElement('input');
+            breakCb.type = 'checkbox';
+            breakCb.className = 'break-seq';
+            breakCb.checked = !!p.breakSequence;
+            breakCb.title = 'Сломать последовательность и разблокировать всё оставшееся мгновенно';
+            breakCb.style.display = (p.minutes === 0) ? 'inline-block' : 'none';
+            breakCb.style.margin = '0 2px';
+            breakCb.style.cursor = 'pointer';
+            breakCb.style.accentColor = '#f4a900';
+            breakCb.addEventListener('change', function () {
+                p.breakSequence = breakCb.checked;
                 if (p.done) { p.done = false; p.startedAt = null; p.finishedAt = null; }
                 unlockerSavePlanToConfig();
             });
@@ -1942,7 +1988,7 @@
             });
 
             row.appendChild(drag); row.appendChild(icon); row.appendChild(idS);
-            row.appendChild(title); row.appendChild(minInput); row.appendChild(rm);
+            row.appendChild(title); row.appendChild(minInput); row.appendChild(breakCb); row.appendChild(rm);
             el.appendChild(row);
         });
 
@@ -1971,7 +2017,7 @@
         function unlockerSavePlanToConfig() {
         // План Unlocker хранится ТОЛЬКО в конфиге, НЕ в ACHS (чтобы не попадать в UI Ctrl+Shift+X)
         const cfg = unlockerGetConfig();
-        cfg.plan = unlockerPlan.map(function (p) { return { id: p.id, title: p.title, minutes: p.minutes }; });
+        cfg.plan = unlockerPlan.map(function (p) { return { id: p.id, title: p.title, minutes: p.minutes, breakSequence: !!p.breakSequence }; });
         unlockerSetConfig(cfg);
     }
 
@@ -1981,7 +2027,8 @@
             return {
                 id: String(p.id),
                 title: p.title || '',
-                minutes: p.minutes || 1,
+                minutes: (p.minutes === 0 || p.minutes) ? p.minutes : 1,
+                breakSequence: !!p.breakSequence,
                 done: false, startedAt: null, finishedAt: null
             };
         });
@@ -2056,6 +2103,7 @@
             id: id,
             title: '',
             minutes: 5,
+            breakSequence: false,
             done: false, startedAt: null, finishedAt: null
         });
         unlockerRenderPlan();
@@ -2150,6 +2198,7 @@
                             id: a.id,
                             title: '',
                             minutes: 5,
+                            breakSequence: false,
                             done: false, startedAt: null, finishedAt: null
                         });
                         newIds.push(a.id);
@@ -2172,6 +2221,7 @@
                         unlockerPlan.push({
                             id: id, title: '',
                             minutes: 5,
+                            breakSequence: false,
                             done: false, startedAt: null, finishedAt: null
                         });
                         newIds.push(id);
