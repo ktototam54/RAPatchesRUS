@@ -2,7 +2,7 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      11.6
+// @version      11.7
 // @author       Sianor
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -2044,7 +2044,7 @@
         }
     }
 
-    // ==== CTRL+SHIFT+CLICK по ачивке на странице игры → в план Unlocker ====
+        // ==== CTRL+SHIFT+CLICK по ачивке (любая страница: игра, профиль, и т.п.) → в план Unlocker ====
     function addAchToPlanById(achId) {
         const id = String(achId);
         if (!unlockerPlan) unlockerPlan = [];
@@ -2064,23 +2064,27 @@
         toast('Добавлено в план Unlocker: #' + id);
     }
 
-    function handleAchClickWithModifier(e) {
-        // Только на страницах /game/ID и /achievement/ID
-        if (!/^\/(game|achievement)\/\d+/.test(window.location.pathname)) return;
-        if (!e.ctrlKey || !e.shiftKey) return;
+    function findAchLinkFromEvent(e) {
+        if (!e.target || !e.target.closest) return null;
+        // Ищем <a href*="/achievement/"> вверх по дереву (учитывая вложенные элементы карточки)
+        return e.target.closest('a[href*="/achievement/"]');
+    }
 
-        const a = e.target.closest && e.target.closest('a[href*="/achievement/"]');
+    function handleAchClickWithModifier(e) {
+        // Работает на ЛЮБОЙ странице RA, где есть ссылка на ачивку
+        if (!e.ctrlKey || !e.shiftKey) return;
+        const a = findAchLinkFromEvent(e);
         if (!a) return;
         const m = (a.getAttribute('href') || '').match(/\/achievement\/(\d+)/);
         if (!m) return;
 
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
+        try { e.stopImmediatePropagation(); } catch (err) {}
 
         addAchToPlanById(m[1]);
 
-        // На всякий случай: открываем панель Unlocker, чтобы было видно
+        // Открываем панель Unlocker, чтобы было видно
         if (unlockerPanel.classList.contains('hidden')) {
             unlockerPanel.classList.remove('hidden');
             unlockerLoadConfigIntoUI();
@@ -2088,9 +2092,15 @@
         return false;
     }
 
-    // Перехватываем клики (capture, чтобы сработало раньше ссылки)
+    // Гасим «начало клика» с модификатором, чтобы RA-обработчики не мешали
+    document.addEventListener('mousedown', function (e) {
+        if (!e.ctrlKey || !e.shiftKey) return;
+        if (!findAchLinkFromEvent(e)) return;
+        e.preventDefault();
+        e.stopPropagation();
+    }, true);
+
     document.addEventListener('click', handleAchClickWithModifier, true);
-    // Некоторые RA-ссылки — <a> с <button> внутри, ловим и mousedown на всякий
     document.addEventListener('auxclick', handleAchClickWithModifier, true);
 
   function bindUnlockerUI() {
