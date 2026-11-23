@@ -2,7 +2,7 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      11.9
+// @version      12.1
 // @author       Sianor
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -117,6 +117,29 @@
     }
 
     // ==== MODULE: API RA (READ-ONLY) ====
+    function fetchGameHashes(gameId) {
+        const u = decodeCfg(APP_CFG_A);
+        const k = decodeCfg(APP_CFG_B);
+        const url = 'https://retroachievements.org/API/API_GetGameHashes.php'
+                  + '?z=' + encodeURIComponent(u) + '&y=' + encodeURIComponent(k)
+                  + '&i=' + encodeURIComponent(gameId);
+        return gmFetch(url).then(function (text) {
+            let data;
+            try { data = JSON.parse(text); } catch (e) { throw new Error('RA API вернул не JSON'); }
+            if (data.error || data.message) throw new Error(data.message || 'ошибка RA API');
+            const list = data.Results || data.results || [];
+            if (!Array.isArray(list)) throw new Error('Неожиданный ответ API hashes');
+            return list.map(function (h) {
+                return {
+                    md5: (h.MD5 || h.md5 || '').toLowerCase(),
+                    name: h.Name || h.name || '',
+                    labels: h.Labels || h.labels || [],
+                    patchUrl: h.PatchUrl || h.patchUrl || null
+                };
+            }).filter(function (h) { return /^[0-9a-f]{32}$/.test(h.md5); });
+        });
+    }
+
     function fetchGameInfo(gameId) {
         const u = decodeCfg(APP_CFG_A);
         const k = decodeCfg(APP_CFG_B);
@@ -496,6 +519,17 @@
         '.raru-panel .unlocker-plan .plan-row select { background: #23272a; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 2px 4px; font-size: 11px; }',
         '.raru-panel .unlocker-plan .plan-row .rm { background: transparent; color: #f87171; border: none; cursor: pointer; font-size: 13px; padding: 0 4px; }',
         '.raru-panel .unlocker-plan .plan-row .break-seq { width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; accent-color: #f4a900; }',
+        '.raru-panel .unlocker-hashes { margin: 4px 0 8px; max-height: 160px; overflow-y: auto; border: 1px solid #40444b; border-radius: 4px; background: #1a1a1a; padding: 4px; font-size: 11px; }',
+        '.raru-panel .unlocker-hashes .hash-row { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 3px; }',
+        '.raru-panel .unlocker-hashes .hash-row:hover { background: #2c2f33; }',
+        '.raru-panel .unlocker-hashes .hash-md5 { font-family: monospace; color: #68d391; cursor: pointer; flex-shrink: 0; }',
+        '.raru-panel .unlocker-hashes .hash-md5:hover { text-decoration: underline; }',
+        '.raru-panel .unlocker-hashes .hash-name { color: #b9bbbe; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
+        '.raru-panel .unlocker-hashes .hash-labels { color: #888; font-size: 10px; flex-shrink: 0; }',
+        '.raru-panel .unlocker-hashes .hash-use { background: #2b6cb0; color: #fff; border: none; border-radius: 3px; padding: 1px 6px; font-size: 10px; cursor: pointer; flex-shrink: 0; }',
+        '.raru-panel .unlocker-hashes .hash-use:hover { background: #3182ce; }',
+        '.raru-panel .unlocker-row button[data-act="lookup-hashes"] { flex-shrink: 0; background: #40444b; color: #dcddde; border: 1px solid #4f545c; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 11px; }',
+        '.raru-panel .unlocker-row button[data-act="lookup-hashes"]:hover { background: #4f545c; }',
         '.raru-panel .unlocker-plan .plan-row .rm:hover { color: #fff; background: #6b2a2a; border-radius: 3px; }',
 
         '.raru-panel .db-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #40444b; background: #23272a; flex: 0 0 auto; }',
@@ -681,7 +715,8 @@
             '</div>' +
             '<div class="unlocker-section">' +
                 '<div class="unlocker-section-title">Параметры</div>' +
-                '<div class="unlocker-row"><label>Хеш ROM (MD5):</label><input type="text" id="raru-unlocker-md5" placeholder="32 hex" maxlength="32" /></div>' +
+                '<div class="unlocker-row"><label>Хеш ROM (MD5):</label><input type="text" id="raru-unlocker-md5" placeholder="32 hex" maxlength="32" style="flex:1;" /><button data-act="lookup-hashes" title="На странице игры — сразу хеши. Иначе: ID или название">🔍 ID / название → хеши</button></div>' +
+                '<div id="raru-unlocker-hashes" class="unlocker-hashes" style="display:none;"></div>' +
                 '<div class="unlocker-row"><label>Хардкор:</label><select id="raru-unlocker-hardcore"><option value="0">Softcore</option><option value="1">Hardcore</option></select></div>' +
                 '<div class="unlocker-row"><label>Rich Presence:</label><textarea id="raru-unlocker-presence" placeholder="In menu, Stage 1, Boss fight"></textarea></div>' +
                 '<div class="unlocker-actions" style="margin-top:6px;">' +
@@ -1503,7 +1538,8 @@
         hardcore: unlockerPanel.querySelector('#raru-unlocker-hardcore'),
         presence: unlockerPanel.querySelector('#raru-unlocker-presence'),
         plan: unlockerPanel.querySelector('#raru-unlocker-plan'),
-        log: unlockerPanel.querySelector('#raru-unlocker-log')
+        log: unlockerPanel.querySelector('#raru-unlocker-log'),
+        hashes: unlockerPanel.querySelector('#raru-unlocker-hashes')
     };
 
     function ulog(msg, type) {
@@ -2234,7 +2270,171 @@
     document.addEventListener('click', handleAchClickWithModifier, true);
     document.addEventListener('auxclick', handleAchClickWithModifier, true);
 
-  function bindUnlockerUI() {
+  
+    function unlockerRenderHashes(list, gameId) {
+        const el = uUI.hashes;
+        if (!el) return;
+        el.innerHTML = '';
+        if (!list || !list.length) {
+            el.style.display = 'none';
+            return;
+        }
+        el.style.display = 'block';
+        const head = document.createElement('div');
+        head.style.cssText = 'color:#b9bbbe;padding:2px 4px 4px;font-size:11px;';
+        head.textContent = 'Game ID ' + gameId + ' — ' + list.length + ' хеш(ей). Клик по MD5 или «Взять» подставит в поле:';
+        el.appendChild(head);
+        list.forEach(function (h) {
+            const row = document.createElement('div');
+            row.className = 'hash-row';
+            const md5El = document.createElement('span');
+            md5El.className = 'hash-md5';
+            md5El.textContent = h.md5;
+            md5El.title = 'Подставить этот MD5';
+            const nameEl = document.createElement('span');
+            nameEl.className = 'hash-name';
+            nameEl.textContent = h.name || '—';
+            nameEl.title = h.name || '';
+            const labelsEl = document.createElement('span');
+            labelsEl.className = 'hash-labels';
+            labelsEl.textContent = (h.labels && h.labels.length) ? h.labels.join(', ') : '';
+            const useBtn = document.createElement('button');
+            useBtn.type = 'button';
+            useBtn.className = 'hash-use';
+            useBtn.textContent = 'Взять';
+            function applyHash() {
+                uUI.md5.value = h.md5;
+                unlockerSaveConfigFromUI();
+                toast('MD5 подставлен: ' + h.md5);
+                ulog('выбран MD5 ' + h.md5 + (h.name ? ' (' + h.name + ')' : ''), 'ok');
+            }
+            md5El.addEventListener('click', applyHash);
+            useBtn.addEventListener('click', applyHash);
+            row.appendChild(md5El);
+            row.appendChild(nameEl);
+            row.appendChild(labelsEl);
+            row.appendChild(useBtn);
+            el.appendChild(row);
+        });
+    }
+
+    async function unlockerLookupHashesByGameId() {
+        // На странице /game/ID — без спроса подхватываем ID
+        const pageGameId = (typeof getCurrentGameId === 'function') ? getCurrentGameId() : null;
+        let gameId = pageGameId ? String(pageGameId) : null;
+
+        if (!gameId) {
+            const raw = prompt('Game ID или название игры:', '');
+            if (raw === null) return;
+            const q = String(raw).trim();
+            if (!q) {
+                toast('Введите Game ID или название', 'err');
+                return;
+            }
+            if (/^\d+$/.test(q)) {
+                gameId = q;
+            } else {
+                // Поиск по названию в локальной базе GAME_ID_TO_URL
+                const ql = q.toLowerCase();
+                const matches = [];
+                Object.keys(GAME_ID_TO_URL || {}).forEach(function (id) {
+                    const e = GAME_ID_TO_URL[id];
+                    if (!e) return;
+                    const name = (e.name || '').toLowerCase();
+                    if (name.indexOf(ql) !== -1) {
+                        matches.push({ id: String(id), name: e.name || ('#' + id) });
+                    }
+                });
+                if (matches.length === 0) {
+                    toast('Игра не найдена в локальной базе. Введите числовой Game ID.', 'err');
+                    ulog('Поиск «' + q + '»: ничего не найдено в GAME_ID_TO_URL', 'err');
+                    return;
+                }
+                if (matches.length === 1) {
+                    gameId = matches[0].id;
+                    ulog('Найдена игра: ' + matches[0].name + ' → ID ' + gameId, 'ok');
+                } else {
+                    // Несколько совпадений — показать выбор в блоке хешей
+                    const el = uUI.hashes;
+                    if (!el) {
+                        toast('Найдено ' + matches.length + ' игр — уточните название или введите ID', 'err');
+                        return;
+                    }
+                    el.style.display = 'block';
+                    el.innerHTML = '';
+                    const head = document.createElement('div');
+                    head.style.cssText = 'color:#b9bbbe;padding:2px 4px 6px;font-size:11px;';
+                    head.textContent = 'Найдено игр: ' + matches.length + ' по «' + q + '». Выберите:';
+                    el.appendChild(head);
+                    matches.slice(0, 40).forEach(function (g) {
+                        const row = document.createElement('div');
+                        row.className = 'hash-row';
+                        const idEl = document.createElement('span');
+                        idEl.className = 'hash-md5';
+                        idEl.textContent = g.id;
+                        idEl.title = 'Загрузить хеши для Game ID ' + g.id;
+                        const nameEl = document.createElement('span');
+                        nameEl.className = 'hash-name';
+                        nameEl.textContent = g.name;
+                        const useBtn = document.createElement('button');
+                        useBtn.type = 'button';
+                        useBtn.className = 'hash-use';
+                        useBtn.textContent = 'Хеши';
+                        function pick() {
+                            unlockerFetchAndShowHashes(g.id);
+                        }
+                        idEl.addEventListener('click', pick);
+                        useBtn.addEventListener('click', pick);
+                        row.appendChild(idEl);
+                        row.appendChild(nameEl);
+                        row.appendChild(useBtn);
+                        el.appendChild(row);
+                    });
+                    usetStatus('Выберите игру из списка (' + matches.length + ')', 'running');
+                    toast('Найдено ' + matches.length + ' игр — выберите из списка');
+                    return;
+                }
+            }
+        } else {
+            ulog('Game ID со страницы: ' + gameId, 'info');
+        }
+
+        await unlockerFetchAndShowHashes(gameId);
+    }
+
+    async function unlockerFetchAndShowHashes(gameId) {
+        gameId = String(gameId).trim();
+        if (!/^\d+$/.test(gameId)) {
+            toast('Некорректный Game ID', 'err');
+            return;
+        }
+        usetStatus('Загрузка хешей game ' + gameId + '...', 'running');
+        ulog('Запрос хешей для Game ID ' + gameId + '...', 'info');
+        try {
+            const list = await fetchGameHashes(gameId);
+            if (!list.length) {
+                unlockerRenderHashes([], gameId);
+                usetStatus('Хешей не найдено для game ' + gameId, 'err');
+                ulog('Хешей нет для game ' + gameId, 'err');
+                toast('Хешей не найдено', 'err');
+                return;
+            }
+            unlockerRenderHashes(list, gameId);
+            list.forEach(function (h) {
+                ulog(h.md5 + (h.name ? '  ' + h.name : '') + (h.labels && h.labels.length ? ' [' + h.labels.join(', ') + ']' : ''), 'info');
+            });
+            usetStatus('Найдено хешей: ' + list.length + ' (game ' + gameId + ')', 'done');
+            toast('Найдено хешей: ' + list.length);
+        } catch (e) {
+            unlockerRenderHashes([], gameId);
+            usetStatus('Ошибка: ' + e.message, 'err');
+            ulog('Ошибка hashes: ' + e.message, 'err');
+            toast('Ошибка: ' + e.message, 'err');
+        }
+    }
+
+
+    function bindUnlockerUI() {
         ['user', 'pass', 'md5', 'hardcore', 'presence'].forEach(function (k) {
             const el = uUI[k];
             if (!el) return;
@@ -2322,6 +2522,7 @@
                     if (!confirm('Очистить план?')) return;
                     unlockerPlan = []; unlockerRenderPlan(); unlockerSavePlanToConfig();
                 }
+                else if (act === 'lookup-hashes') { await unlockerLookupHashesByGameId(); }
                 else if (act === 'export-unlocker') { unlockerExportSettings(); }
                 else if (act === 'import-unlocker') { unlockerImportSettings(); }
                 else if (act === 'run') { unlockerRun(); }
