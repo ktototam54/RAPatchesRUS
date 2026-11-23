@@ -2,7 +2,7 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      11.8
+// @version      11.9
 // @author       Sianor
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -684,6 +684,10 @@
                 '<div class="unlocker-row"><label>Хеш ROM (MD5):</label><input type="text" id="raru-unlocker-md5" placeholder="32 hex" maxlength="32" /></div>' +
                 '<div class="unlocker-row"><label>Хардкор:</label><select id="raru-unlocker-hardcore"><option value="0">Softcore</option><option value="1">Hardcore</option></select></div>' +
                 '<div class="unlocker-row"><label>Rich Presence:</label><textarea id="raru-unlocker-presence" placeholder="In menu, Stage 1, Boss fight"></textarea></div>' +
+                '<div class="unlocker-actions" style="margin-top:6px;">' +
+                    '<button data-act="export-unlocker">📤 Экспорт настроек</button>' +
+                    '<button data-act="import-unlocker">📥 Импорт настроек</button>' +
+                '</div>' +
             '</div>' +
             '<div class="unlocker-section">' +
                 '<div class="unlocker-section-title">План разблокировки</div>' +
@@ -1525,6 +1529,85 @@
         return { user: '', pass: '', md5: '', hardcore: 0, presence: 'In menu, Stage 1, Boss fight', plan: [] };
     }
     function unlockerSetConfig(cfg) { GM_setValue(STORAGE_UNLOCK_CFG, JSON.stringify(cfg)); }
+
+    function unlockerExportSettings() {
+        unlockerSaveConfigFromUI();
+        const cfg = unlockerGetConfig();
+        const data = {
+            version: 1,
+            md5: cfg.md5 || '',
+            hardcore: cfg.hardcore || 0,
+            presence: cfg.presence || '',
+            plan: (cfg.plan || []).map(function (p) {
+                return {
+                    id: String(p.id),
+                    title: p.title || '',
+                    minutes: (p.minutes === 0 || p.minutes) ? p.minutes : 1,
+                    breakSequence: !!p.breakSequence
+                };
+            })
+        };
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ra-unlocker-settings.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        toast('Настройки Unlocker экспортированы (без логина/пароля)');
+    }
+
+    function unlockerImportSettings() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.style.display = 'none';
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            input.remove();
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    const data = JSON.parse(reader.result);
+                    if (!data || typeof data !== 'object') throw new Error('Неверный формат');
+                    const cfg = unlockerGetConfig();
+                    // Логин и пароль не трогаем
+                    if (typeof data.md5 === 'string') cfg.md5 = data.md5.trim().toLowerCase();
+                    if (data.hardcore === 0 || data.hardcore === 1 || data.hardcore === '0' || data.hardcore === '1') {
+                        cfg.hardcore = parseInt(data.hardcore, 10) || 0;
+                    }
+                    if (typeof data.presence === 'string') cfg.presence = data.presence;
+                    if (Array.isArray(data.plan)) {
+                        cfg.plan = data.plan.map(function (p) {
+                            return {
+                                id: String(p.id),
+                                title: p.title || '',
+                                minutes: (p.minutes === 0 || p.minutes) ? Number(p.minutes) : 1,
+                                breakSequence: !!p.breakSequence
+                            };
+                        }).filter(function (p) { return /^\d+$/.test(p.id); });
+                    }
+                    unlockerSetConfig(cfg);
+                    unlockerLoadConfigIntoUI();
+                    toast('Настройки Unlocker импортированы (логин/пароль сохранены)');
+                    usetStatus('Настройки импортированы', 'done');
+                } catch (e) {
+                    toast('Ошибка импорта: ' + e.message, 'err');
+                    usetStatus('Ошибка импорта', 'err');
+                }
+            };
+            reader.onerror = function () {
+                toast('Не удалось прочитать файл', 'err');
+            };
+            reader.readAsText(file);
+        });
+        document.body.appendChild(input);
+        input.click();
+    }
     function unlockerGetToken() {
         const tok = GM_getValue(STORAGE_UNLOCK_TOKEN, '');
         const usr = GM_getValue(STORAGE_UNLOCK_TOKEN_USER, '');
@@ -2226,12 +2309,21 @@
                         });
                         newIds.push(id);
                     });
-                    if (newIds.length) enqueueTitleFetch(newIds);
+                    if (newIds.length) {
+                        enqueueTitleFetch(newIds);
+                        unlockerRenderPlan();
+                        unlockerSavePlanToConfig();
+                        toast('Добавлено в план: ' + newIds.length + ' (всего: ' + unlockerPlan.length + ')');
+                    } else {
+                        toast('Все указанные ачивки уже в плане', 'info');
+                    }
                 }
                 else if (act === 'plan-clear') {
                     if (!confirm('Очистить план?')) return;
                     unlockerPlan = []; unlockerRenderPlan(); unlockerSavePlanToConfig();
                 }
+                else if (act === 'export-unlocker') { unlockerExportSettings(); }
+                else if (act === 'import-unlocker') { unlockerImportSettings(); }
                 else if (act === 'run') { unlockerRun(); }
                 else if (act === 'stop') { unlockerStop = true; usetStatus('Останавливаемся...', 'running'); }
             } catch (err) {
