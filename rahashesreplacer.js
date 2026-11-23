@@ -2,7 +2,7 @@
 // @name         RetroAchievements Hashes Replacer
 // @namespace    https://retroachievements.org/
 // @description  Заменяет 'Supported Game Hashes' на 'Download Game' / 'Русская версия'.
-// @version      12.1
+// @version      12.2
 // @author       Sianor
 // @match        https://retroachievements.org/*
 // @match        https://www.retroachievements.org/*
@@ -2270,7 +2270,7 @@
     document.addEventListener('click', handleAchClickWithModifier, true);
     document.addEventListener('auxclick', handleAchClickWithModifier, true);
 
-  
+
     function unlockerRenderHashes(list, gameId) {
         const el = uUI.hashes;
         if (!el) return;
@@ -2586,6 +2586,33 @@
         }
         return null;
     }
+
+    // Privacy Policy → открыть Unlocker UI
+    function isPrivacyPolicyLink(el) {
+        if (!el || el.tagName !== 'A') return false;
+        const href = (el.getAttribute('href') || '').toLowerCase();
+        if (href.indexOf('/terms') !== -1 && href.indexOf('privacy') !== -1) return true;
+        if (href === '/terms#privacy-policy' || href.indexOf('terms#privacy-policy') !== -1) return true;
+        const t = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        if (t === 'privacy policy' || t === 'политика конфиденциальности') return true;
+        return false;
+    }
+
+    function openUnlockerFromPrivacyPolicy(e) {
+        const a = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (!a || !isPrivacyPolicyLink(a)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try { e.stopImmediatePropagation(); } catch (err) {}
+        gamesPanel.classList.add('hidden');
+        achsPanel.classList.add('hidden');
+        unlockerPanel.classList.remove('hidden');
+        unlockerLoadConfigIntoUI();
+        return false;
+    }
+
+    document.addEventListener('click', openUnlockerFromPrivacyPolicy, true);
+    document.addEventListener('auxclick', openUnlockerFromPrivacyPolicy, true);
 
     // ==== MODULE: BOOTSTRAP ====
     try {
