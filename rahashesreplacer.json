@@ -409,6 +409,10 @@
     "comment": "Официальная поддержка",
     "name": "Crusader of Centy (Genesis/Mega Drive)"
   },
+  "1527": {
+    "name": "Adventures in the Magic Kingdom (NES/Famicom)",
+    "status": "ru_impossible"
+  },
   "1528": {
     "ru": "https://disk.yandex.ru/d/egeiqLCytJJR-A",
     "status": "mastering",
@@ -426,6 +430,10 @@
     "status": "mastering",
     "comment": "Протестировал: [user=Shiorat]",
     "name": "Adventures of Lolo (NES/Famicom)"
+  },
+  "1553": {
+    "name": "Bad Dudes (NES/Famicom)",
+    "status": "ru_impossible"
   },
   "2091": {
     "ru": "https://disk.yandex.ru/d/m2uuz_HqaHTAbg",
@@ -955,6 +963,10 @@
     "name": "The Adventures of Rocky and Bullwinkle and Friends (NES/Famicom)",
     "ru": "https://disk.yandex.ru/d/VQ9dIugk-QxBrA",
     "comment": "Протестировал: [user=Shiorat]"
+  },
+  "4548": {
+    "name": "Alien Syndrome (NES/Famicom)",
+    "status": "ru_impossible"
   },
   "4587": {
     "name": "Nuclear Strike (PlayStation)",
